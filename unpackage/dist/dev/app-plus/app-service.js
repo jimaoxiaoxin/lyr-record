@@ -9641,6 +9641,7 @@ if (uni.restoreGlobal) {
   var recordTimeInterval = null;
   var recorderManager = null;
   var music = null;
+  var bgAudioManager = null;
   const _sfc_main$1Y = {
     data() {
       return {
@@ -9648,29 +9649,35 @@ if (uni.restoreGlobal) {
         recording: false,
         playing: false,
         hasRecord: false,
+        bgPlaying: false,
         tempFilePath: "",
         recordTime: 0,
         playTime: 0,
         formatedRecordTime: "00:00:00",
-        formatedPlayTime: "00:00:00"
+        formatedPlayTime: "00:00:00",
+        records: [],
+        audioAction: {
+          method: "pause"
+        }
       };
     },
     onUnload: function() {
       this.end();
     },
     onLoad: function() {
+      this.refreshRecordsList();
       music = uni.createInnerAudioContext();
       music.onEnded(() => {
         clearInterval(playTimeInterval);
         var playTime = 0;
-        formatAppLog("log", "at pages/API/voice/voice.vue:91", "play voice finished");
+        formatAppLog("log", "at pages/API/voice/voice.vue:116", "play voice finished");
         this.playing = false;
         this.formatedPlayTime = formatTime(playTime);
         this.playTime = playTime;
       });
       recorderManager = uni.getRecorderManager();
       recorderManager.onStart(() => {
-        formatAppLog("log", "at pages/API/voice/voice.vue:98", "recorder start");
+        formatAppLog("log", "at pages/API/voice/voice.vue:123", "recorder start");
         this.recording = true;
         recordTimeInterval = setInterval(() => {
           this.recordTime += 1;
@@ -9678,13 +9685,32 @@ if (uni.restoreGlobal) {
         }, 1e3);
       });
       recorderManager.onStop((res2) => {
-        formatAppLog("log", "at pages/API/voice/voice.vue:107", "on stop");
+        formatAppLog("log", "at pages/API/voice/voice.vue:132", "on stop");
         music.src = res2.tempFilePath;
-        this.hasRecord = true;
+        uni.uploadFile({
+          url: "http://47.94.170.153/test1/record",
+          filePath: res2.tempFilePath,
+          name: "record",
+          success: (res3) => {
+            uni.showToast({
+              title: "\u5F55\u97F3\u5DF2\u4FDD\u5B58",
+              icon: "none",
+              duration: 1200
+            });
+            this.refreshRecordsList();
+          },
+          complete: (res3) => {
+            formatAppLog("log", "at pages/API/voice/voice.vue:148", res3);
+          }
+        });
         this.recording = false;
       });
       recorderManager.onError(() => {
-        formatAppLog("log", "at pages/API/voice/voice.vue:114", "recorder onError");
+        formatAppLog("log", "at pages/API/voice/voice.vue:155", "recorder onError");
+      });
+      bgAudioManager = uni.getBackgroundAudioManager();
+      bgAudioManager.onEnded((res2) => {
+        this.randomPlayRecords();
       });
     },
     methods: {
@@ -9697,12 +9723,36 @@ if (uni.restoreGlobal) {
           format: "mp3"
         });
       },
+      getRecordUrl(file) {
+        return "http://47.94.170.153/storage/" + file;
+      },
+      refreshRecordsList() {
+        uni.request({
+          url: "http://47.94.170.153/test1/records",
+          data: {
+            text: "uni.request"
+          },
+          header: {
+            "custom-header": "hello"
+          },
+          success: (res2) => {
+            formatAppLog("log", "at pages/API/voice/voice.vue:189", res2.data);
+            this.records = res2.data;
+          }
+        });
+      },
+      randomPlayRecords() {
+        var recordSrc = this.records.pop();
+        bgAudioManager.src = "http://47.94.170.153/storage/" + recordSrc;
+        formatAppLog("log", "at pages/API/voice/voice.vue:197", bgAudioManager.src);
+        bgAudioManager.play();
+      },
       stopRecord() {
         recorderManager.stop();
         clearInterval(recordTimeInterval);
       },
       playVoice() {
-        formatAppLog("log", "at pages/API/voice/voice.vue:136", "play voice");
+        formatAppLog("log", "at pages/API/voice/voice.vue:205", "play voice");
         this.playing = true;
         playTimeInterval = setInterval(() => {
           this.playTime += 1;
@@ -9760,6 +9810,31 @@ if (uni.restoreGlobal) {
     const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
     return vue.openBlock(), vue.createElementBlock("view", null, [
       vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
+      vue.createElementVNode("view", null, [
+        vue.createElementVNode("view", { class: "page-body" }, [
+          vue.createElementVNode("view", {
+            class: "page-section page-section-gap",
+            style: { "text-align": "center" }
+          }, [
+            (vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList($data.records, (record2, index) => {
+              return vue.openBlock(), vue.createElementBlock("audio", {
+                key: index,
+                id: record2 + index,
+                src: $options.getRecordUrl(record2),
+                style: { "text-align": "left" },
+                action: $data.audioAction,
+                controls: ""
+              }, null, 8, ["id", "src", "action"]);
+            }), 128))
+          ]),
+          vue.createElementVNode("view", { class: "uni-padding-wrap uni-common-mt" }, [
+            vue.createElementVNode("button", {
+              type: "primary",
+              onClick: _cache[0] || (_cache[0] = (...args) => $options.randomPlayRecords && $options.randomPlayRecords(...args))
+            }, "\u968F\u673A\u64AD\u653E")
+          ])
+        ])
+      ]),
       vue.createElementVNode("view", { class: "uni-padding-wrap" }, [
         !$data.recording && !$data.playing && !$data.hasRecord ? (vue.openBlock(), vue.createElementBlock(vue.Fragment, { key: 0 }, [
           vue.createElementVNode("view", { class: "page-body-time" }, [
@@ -9769,7 +9844,7 @@ if (uni.restoreGlobal) {
             vue.createElementVNode("view", { class: "page-body-button" }),
             vue.createElementVNode("view", {
               class: "page-body-button",
-              onClick: _cache[0] || (_cache[0] = (...args) => $options.startRecord && $options.startRecord(...args))
+              onClick: _cache[1] || (_cache[1] = (...args) => $options.startRecord && $options.startRecord(...args))
             }, [
               vue.createElementVNode("image", { src: "/static/record.png" })
             ]),
@@ -9784,7 +9859,7 @@ if (uni.restoreGlobal) {
             vue.createElementVNode("view", { class: "page-body-button" }),
             vue.createElementVNode("view", {
               class: "page-body-button",
-              onClick: _cache[1] || (_cache[1] = (...args) => $options.stopRecord && $options.stopRecord(...args))
+              onClick: _cache[2] || (_cache[2] = (...args) => $options.stopRecord && $options.stopRecord(...args))
             }, [
               vue.createElementVNode("view", { class: "button-stop-record" })
             ]),
@@ -9799,13 +9874,13 @@ if (uni.restoreGlobal) {
           vue.createElementVNode("view", { class: "page-body-buttons" }, [
             vue.createElementVNode("view", {
               class: "page-body-button",
-              onClick: _cache[2] || (_cache[2] = (...args) => $options.playVoice && $options.playVoice(...args))
+              onClick: _cache[3] || (_cache[3] = (...args) => $options.playVoice && $options.playVoice(...args))
             }, [
               vue.createElementVNode("image", { src: "/static/play.png" })
             ]),
             vue.createElementVNode("view", {
               class: "page-body-button",
-              onClick: _cache[3] || (_cache[3] = (...args) => $options.clear && $options.clear(...args))
+              onClick: _cache[4] || (_cache[4] = (...args) => $options.clear && $options.clear(...args))
             }, [
               vue.createElementVNode("image", { src: "/static/trash.png" })
             ])
@@ -9819,13 +9894,13 @@ if (uni.restoreGlobal) {
           vue.createElementVNode("view", { class: "page-body-buttons" }, [
             vue.createElementVNode("view", {
               class: "page-body-button",
-              onClick: _cache[4] || (_cache[4] = (...args) => $options.stopVoice && $options.stopVoice(...args))
+              onClick: _cache[5] || (_cache[5] = (...args) => $options.stopVoice && $options.stopVoice(...args))
             }, [
               vue.createElementVNode("image", { src: "/static/stop.png" })
             ]),
             vue.createElementVNode("view", {
               class: "page-body-button",
-              onClick: _cache[5] || (_cache[5] = (...args) => $options.clear && $options.clear(...args))
+              onClick: _cache[6] || (_cache[6] = (...args) => $options.clear && $options.clear(...args))
             }, [
               vue.createElementVNode("image", { src: "/static/trash.png" })
             ])

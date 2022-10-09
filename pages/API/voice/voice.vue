@@ -1,6 +1,23 @@
 <template>
     <view>
         <page-head :title="title"></page-head>
+		<view>
+				<view class="page-body">
+					<view class="page-section page-section-gap" style="text-align: center;">
+						<audio v-for="(record, index) in records" 
+							:key="index"
+							:id="record + index"
+							:src="getRecordUrl(record)"
+							style="text-align: left"  
+							:action="audioAction" 
+							controls></audio>
+					</view>
+					<view class="uni-padding-wrap uni-common-mt">
+					    <button type="primary" 
+							@click="randomPlayRecords">随机播放</button>
+					</view>
+				</view>
+			</view>
         <view class="uni-padding-wrap">
             <block v-if="!recording && !playing && !hasRecord">
                 <view class="page-body-time">
@@ -66,6 +83,8 @@
     var recordTimeInterval = null;
     var recorderManager = null;
     var music = null;
+	var bgAudioManager = null;
+	var records = [];
     export default {
         data() {
             return {
@@ -73,17 +92,23 @@
                 recording: false, //录音中
                 playing: false, //播放中
                 hasRecord: false, //是否有了一个
+				bgPlaying: false,
                 tempFilePath: '',
                 recordTime: 0,
                 playTime: 0,
                 formatedRecordTime: '00:00:00', //录音的总时间
-                formatedPlayTime: '00:00:00' //播放录音的当前时间
+                formatedPlayTime: '00:00:00' ,//播放录音的当前时间，
+				records: [],
+				audioAction: {
+					method: 'pause'
+				}
             }
         },
         onUnload: function() {
             this.end();
         },
         onLoad: function() {
+			this.refreshRecordsList();
             music = uni.createInnerAudioContext();
             music.onEnded(() => {
                 clearInterval(playTimeInterval)
@@ -107,12 +132,32 @@
                 console.log('on stop');
                 music.src = res.tempFilePath;
 
-                this.hasRecord = true;
+				uni.uploadFile({
+					url: 'http://47.94.170.153/test1/record',
+					filePath: res.tempFilePath,
+					name: 'record',
+					success: (res) => {
+						uni.showToast({
+							title: '录音已保存',
+							icon: 'none',
+							duration: 1200
+						})
+						this.refreshRecordsList();
+					},
+					complete: (res) => {
+						console.log(res);
+					}
+				})
+                // this.hasRecord = true;
                 this.recording = false;
             });
             recorderManager.onError(() => {
                 console.log('recorder onError');
             });
+			bgAudioManager = uni.getBackgroundAudioManager();
+			bgAudioManager.onEnded((res) => {
+				this.randomPlayRecords();
+			});
         },
         methods: {
             async startRecord() { //开始录音
@@ -128,6 +173,30 @@
                     format: 'mp3'
                 });
             },
+			getRecordUrl(file) {
+				return 'http://47.94.170.153/storage/' + file; 
+			},
+			refreshRecordsList() {
+				uni.request({
+					url: 'http://47.94.170.153/test1/records',
+					data: {
+						text: 'uni.request'
+					},
+					header: {
+						'custom-header': 'hello'
+					},
+					success: (res) => {
+						console.log(res.data);
+						this.records = res.data;
+					}
+				})
+			},
+			randomPlayRecords() {
+				var recordSrc = this.records.pop();
+				bgAudioManager.src = 'http://47.94.170.153/storage/' + recordSrc;
+				console.log(bgAudioManager.src);
+				bgAudioManager.play();
+			},
             stopRecord() { //停止录音
                 recorderManager.stop();
                 clearInterval(recordTimeInterval);
