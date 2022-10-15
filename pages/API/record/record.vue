@@ -16,18 +16,6 @@
 					    <button type="primary" 
 							@click="randomPlayRecords">随机播放</button>
 					</view>
-					<view class="uni-padding-wrap uni-common-mt">
-					    <button type="primary" 
-							@click="pausePlayRecords">暂停播放</button>
-					</view>
-					<view class="uni-padding-wrap uni-common-mt">
-					    <button type="primary" 
-							@click="continuePlayRecords">恢复播放</button>
-					</view>
-					<view class="uni-padding-wrap uni-common-mt">
-					    <button type="primary" 
-							@click="refreshRecordsList">重新播放</button>
-					</view>
 				</view>
 			</view>
         <view class="uni-padding-wrap">
@@ -106,13 +94,11 @@
                 hasRecord: false, //是否有了一个
 				bgPlaying: false,
                 tempFilePath: '',
-				pausePlay: false,
                 recordTime: 0,
                 playTime: 0,
                 formatedRecordTime: '00:00:00', //录音的总时间
                 formatedPlayTime: '00:00:00' ,//播放录音的当前时间，
 				records: [],
-				dirName: 'Chinese',
 				audioAction: {
 					method: 'pause'
 				}
@@ -121,11 +107,7 @@
         onUnload: function() {
             this.end();
         },
-        onLoad: function(option) {
-			if (option.dirName) {
-				this.dirName = option.dirName;
-			}
-			console.log('received dirname' + this.dirName);
+        onLoad: function() {
 			this.refreshRecordsList();
             music = uni.createInnerAudioContext();
             music.onEnded(() => {
@@ -151,7 +133,7 @@
                 music.src = res.tempFilePath;
 
 				uni.uploadFile({
-					url: 'http://47.94.170.153/' + this.dirName + '/record',
+					url: 'http://47.94.170.153/test1/record',
 					filePath: res.tempFilePath,
 					name: 'record',
 					success: (res) => {
@@ -174,16 +156,12 @@
             });
 			bgAudioManager = uni.getBackgroundAudioManager();
 			bgAudioManager.onEnded((res) => {
-				if (!this.pausePlay) {	
-					this.sleep(15000);
-					this.randomPlayRecords();
-				}
+				this.randomPlayRecords();
 			});
         },
         methods: {
             async startRecord() { //开始录音
                 // #ifdef APP-PLUS
-				this.formatedRecordTime = '00:00:00';
                 let status = await this.checkPermission();
                 if (status !== 1) {
                     return;
@@ -200,7 +178,7 @@
 			},
 			refreshRecordsList() {
 				uni.request({
-					url: 'http://47.94.170.153/' + this.dirName + '/records',
+					url: 'http://47.94.170.153/test1/records',
 					data: {
 						text: 'uni.request'
 					},
@@ -212,19 +190,6 @@
 						this.records = res.data;
 					}
 				})
-			},
-			pausePlayRecords() {
-				this.pausePlay = true;
-			},
-			continuePlayRecords() {
-				this.pausePlay = false;
-				this.randomPlayRecords();
-			},
-			sleep(delay) {
-				var start = (new Date()).getTime();
-				while ((new Date()).getTime() - start < delay) {
-					continue;
-				}
 			},
 			randomPlayRecords() {
 				var recordSrc = this.records.pop();

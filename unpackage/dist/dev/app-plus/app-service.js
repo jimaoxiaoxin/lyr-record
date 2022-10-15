@@ -9651,11 +9651,13 @@ if (uni.restoreGlobal) {
         hasRecord: false,
         bgPlaying: false,
         tempFilePath: "",
+        pausePlay: false,
         recordTime: 0,
         playTime: 0,
         formatedRecordTime: "00:00:00",
         formatedPlayTime: "00:00:00",
         records: [],
+        dirName: "Chinese",
         audioAction: {
           method: "pause"
         }
@@ -9664,20 +9666,24 @@ if (uni.restoreGlobal) {
     onUnload: function() {
       this.end();
     },
-    onLoad: function() {
+    onLoad: function(option) {
+      if (option.dirName) {
+        this.dirName = option.dirName;
+      }
+      formatAppLog("log", "at pages/API/voice/voice.vue:128", "received dirname" + this.dirName);
       this.refreshRecordsList();
       music = uni.createInnerAudioContext();
       music.onEnded(() => {
         clearInterval(playTimeInterval);
         var playTime = 0;
-        formatAppLog("log", "at pages/API/voice/voice.vue:116", "play voice finished");
+        formatAppLog("log", "at pages/API/voice/voice.vue:134", "play voice finished");
         this.playing = false;
         this.formatedPlayTime = formatTime(playTime);
         this.playTime = playTime;
       });
       recorderManager = uni.getRecorderManager();
       recorderManager.onStart(() => {
-        formatAppLog("log", "at pages/API/voice/voice.vue:123", "recorder start");
+        formatAppLog("log", "at pages/API/voice/voice.vue:141", "recorder start");
         this.recording = true;
         recordTimeInterval = setInterval(() => {
           this.recordTime += 1;
@@ -9685,10 +9691,10 @@ if (uni.restoreGlobal) {
         }, 1e3);
       });
       recorderManager.onStop((res2) => {
-        formatAppLog("log", "at pages/API/voice/voice.vue:132", "on stop");
+        formatAppLog("log", "at pages/API/voice/voice.vue:150", "on stop");
         music.src = res2.tempFilePath;
         uni.uploadFile({
-          url: "http://47.94.170.153/test1/record",
+          url: "http://47.94.170.153/" + this.dirName + "/record",
           filePath: res2.tempFilePath,
           name: "record",
           success: (res3) => {
@@ -9700,21 +9706,25 @@ if (uni.restoreGlobal) {
             this.refreshRecordsList();
           },
           complete: (res3) => {
-            formatAppLog("log", "at pages/API/voice/voice.vue:148", res3);
+            formatAppLog("log", "at pages/API/voice/voice.vue:166", res3);
           }
         });
         this.recording = false;
       });
       recorderManager.onError(() => {
-        formatAppLog("log", "at pages/API/voice/voice.vue:155", "recorder onError");
+        formatAppLog("log", "at pages/API/voice/voice.vue:173", "recorder onError");
       });
       bgAudioManager = uni.getBackgroundAudioManager();
       bgAudioManager.onEnded((res2) => {
-        this.randomPlayRecords();
+        if (!this.pausePlay) {
+          this.sleep(15e3);
+          this.randomPlayRecords();
+        }
       });
     },
     methods: {
       async startRecord() {
+        this.formatedRecordTime = "00:00:00";
         let status = await this.checkPermission();
         if (status !== 1) {
           return;
@@ -9728,7 +9738,7 @@ if (uni.restoreGlobal) {
       },
       refreshRecordsList() {
         uni.request({
-          url: "http://47.94.170.153/test1/records",
+          url: "http://47.94.170.153/" + this.dirName + "/records",
           data: {
             text: "uni.request"
           },
@@ -9736,15 +9746,28 @@ if (uni.restoreGlobal) {
             "custom-header": "hello"
           },
           success: (res2) => {
-            formatAppLog("log", "at pages/API/voice/voice.vue:189", res2.data);
+            formatAppLog("log", "at pages/API/voice/voice.vue:211", res2.data);
             this.records = res2.data;
           }
         });
       },
+      pausePlayRecords() {
+        this.pausePlay = true;
+      },
+      continuePlayRecords() {
+        this.pausePlay = false;
+        this.randomPlayRecords();
+      },
+      sleep(delay) {
+        var start = new Date().getTime();
+        while (new Date().getTime() - start < delay) {
+          continue;
+        }
+      },
       randomPlayRecords() {
         var recordSrc = this.records.pop();
         bgAudioManager.src = "http://47.94.170.153/storage/" + recordSrc;
-        formatAppLog("log", "at pages/API/voice/voice.vue:197", bgAudioManager.src);
+        formatAppLog("log", "at pages/API/voice/voice.vue:232", bgAudioManager.src);
         bgAudioManager.play();
       },
       stopRecord() {
@@ -9752,7 +9775,7 @@ if (uni.restoreGlobal) {
         clearInterval(recordTimeInterval);
       },
       playVoice() {
-        formatAppLog("log", "at pages/API/voice/voice.vue:205", "play voice");
+        formatAppLog("log", "at pages/API/voice/voice.vue:240", "play voice");
         this.playing = true;
         playTimeInterval = setInterval(() => {
           this.playTime += 1;
@@ -9832,6 +9855,24 @@ if (uni.restoreGlobal) {
               type: "primary",
               onClick: _cache[0] || (_cache[0] = (...args) => $options.randomPlayRecords && $options.randomPlayRecords(...args))
             }, "\u968F\u673A\u64AD\u653E")
+          ]),
+          vue.createElementVNode("view", { class: "uni-padding-wrap uni-common-mt" }, [
+            vue.createElementVNode("button", {
+              type: "primary",
+              onClick: _cache[1] || (_cache[1] = (...args) => $options.pausePlayRecords && $options.pausePlayRecords(...args))
+            }, "\u6682\u505C\u64AD\u653E")
+          ]),
+          vue.createElementVNode("view", { class: "uni-padding-wrap uni-common-mt" }, [
+            vue.createElementVNode("button", {
+              type: "primary",
+              onClick: _cache[2] || (_cache[2] = (...args) => $options.continuePlayRecords && $options.continuePlayRecords(...args))
+            }, "\u6062\u590D\u64AD\u653E")
+          ]),
+          vue.createElementVNode("view", { class: "uni-padding-wrap uni-common-mt" }, [
+            vue.createElementVNode("button", {
+              type: "primary",
+              onClick: _cache[3] || (_cache[3] = (...args) => $options.refreshRecordsList && $options.refreshRecordsList(...args))
+            }, "\u91CD\u65B0\u64AD\u653E")
           ])
         ])
       ]),
@@ -9844,7 +9885,7 @@ if (uni.restoreGlobal) {
             vue.createElementVNode("view", { class: "page-body-button" }),
             vue.createElementVNode("view", {
               class: "page-body-button",
-              onClick: _cache[1] || (_cache[1] = (...args) => $options.startRecord && $options.startRecord(...args))
+              onClick: _cache[4] || (_cache[4] = (...args) => $options.startRecord && $options.startRecord(...args))
             }, [
               vue.createElementVNode("image", { src: "/static/record.png" })
             ]),
@@ -9859,7 +9900,7 @@ if (uni.restoreGlobal) {
             vue.createElementVNode("view", { class: "page-body-button" }),
             vue.createElementVNode("view", {
               class: "page-body-button",
-              onClick: _cache[2] || (_cache[2] = (...args) => $options.stopRecord && $options.stopRecord(...args))
+              onClick: _cache[5] || (_cache[5] = (...args) => $options.stopRecord && $options.stopRecord(...args))
             }, [
               vue.createElementVNode("view", { class: "button-stop-record" })
             ]),
@@ -9874,13 +9915,13 @@ if (uni.restoreGlobal) {
           vue.createElementVNode("view", { class: "page-body-buttons" }, [
             vue.createElementVNode("view", {
               class: "page-body-button",
-              onClick: _cache[3] || (_cache[3] = (...args) => $options.playVoice && $options.playVoice(...args))
+              onClick: _cache[6] || (_cache[6] = (...args) => $options.playVoice && $options.playVoice(...args))
             }, [
               vue.createElementVNode("image", { src: "/static/play.png" })
             ]),
             vue.createElementVNode("view", {
               class: "page-body-button",
-              onClick: _cache[4] || (_cache[4] = (...args) => $options.clear && $options.clear(...args))
+              onClick: _cache[7] || (_cache[7] = (...args) => $options.clear && $options.clear(...args))
             }, [
               vue.createElementVNode("image", { src: "/static/trash.png" })
             ])
@@ -9894,13 +9935,13 @@ if (uni.restoreGlobal) {
           vue.createElementVNode("view", { class: "page-body-buttons" }, [
             vue.createElementVNode("view", {
               class: "page-body-button",
-              onClick: _cache[5] || (_cache[5] = (...args) => $options.stopVoice && $options.stopVoice(...args))
+              onClick: _cache[8] || (_cache[8] = (...args) => $options.stopVoice && $options.stopVoice(...args))
             }, [
               vue.createElementVNode("image", { src: "/static/stop.png" })
             ]),
             vue.createElementVNode("view", {
               class: "page-body-button",
-              onClick: _cache[6] || (_cache[6] = (...args) => $options.clear && $options.clear(...args))
+              onClick: _cache[9] || (_cache[9] = (...args) => $options.clear && $options.clear(...args))
             }, [
               vue.createElementVNode("image", { src: "/static/trash.png" })
             ])
