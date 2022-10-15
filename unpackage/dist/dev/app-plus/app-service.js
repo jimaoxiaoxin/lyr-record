@@ -9576,830 +9576,491 @@ if (uni.restoreGlobal) {
     ]);
   }
   var PagesAPIImageImage = /* @__PURE__ */ _export_sfc(_sfc_main$1Z, [["render", _sfc_render$1Y], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/image/image.vue"]]);
-  function formatTime(time) {
-    if (typeof time !== "number" || time < 0) {
-      return time;
-    }
-    var hour = parseInt(time / 3600);
-    time = time % 3600;
-    var minute = parseInt(time / 60);
-    time = time % 60;
-    var second = time;
-    return [hour, minute, second].map(function(n2) {
-      n2 = n2.toString();
-      return n2[1] ? n2 : "0" + n2;
-    }).join(":");
-  }
-  function formatLocation$2(longitude, latitude) {
-    if (typeof longitude === "string" && typeof latitude === "string") {
-      longitude = parseFloat(longitude);
-      latitude = parseFloat(latitude);
-    }
-    longitude = longitude.toFixed(2);
-    latitude = latitude.toFixed(2);
-    return {
-      longitude: longitude.toString().split("."),
-      latitude: latitude.toString().split(".")
-    };
-  }
-  var dateUtils = {
-    UNITS: {
-      "\u5E74": 315576e5,
-      "\u6708": 26298e5,
-      "\u5929": 864e5,
-      "\u5C0F\u65F6": 36e5,
-      "\u5206\u949F": 6e4,
-      "\u79D2": 1e3
-    },
-    humanize: function(milliseconds) {
-      var humanize = "";
-      for (var key in this.UNITS) {
-        if (milliseconds >= this.UNITS[key]) {
-          humanize = Math.floor(milliseconds / this.UNITS[key]) + key + "\u524D";
-          break;
-        }
-      }
-      return humanize || "\u521A\u521A";
-    },
-    format: function(dateStr) {
-      var date = this.parse(dateStr);
-      var diff = Date.now() - date.getTime();
-      if (diff < this.UNITS["\u5929"]) {
-        return this.humanize(diff);
-      }
-      var _format = function(number) {
-        return number < 10 ? "0" + number : number;
-      };
-      return date.getFullYear() + "/" + _format(date.getMonth() + 1) + "/" + _format(date.getDate()) + "-" + _format(date.getHours()) + ":" + _format(date.getMinutes());
-    },
-    parse: function(str) {
-      var a2 = str.split(/[^0-9]/);
-      return new Date(a2[0], a2[1] - 1, a2[2], a2[3], a2[4], a2[5]);
-    }
-  };
-  var playTimeInterval = null;
-  var recordTimeInterval = null;
-  var recorderManager = null;
-  var music = null;
-  var bgAudioManager = null;
-  const _sfc_main$1Y = {
+  var popup = {
     data() {
-      return {
-        title: "start/stopRecord\u3001play/stopVoice",
-        recording: false,
-        playing: false,
-        hasRecord: false,
-        bgPlaying: false,
-        tempFilePath: "",
-        pausePlay: false,
-        recordTime: 0,
-        playTime: 0,
-        formatedRecordTime: "00:00:00",
-        formatedPlayTime: "00:00:00",
-        records: [],
-        dirName: "Chinese",
-        audioAction: {
-          method: "pause"
-        }
-      };
+      return {};
     },
-    onUnload: function() {
-      this.end();
-    },
-    onLoad: function(option) {
-      if (option.dirName) {
-        this.dirName = option.dirName;
-      }
-      formatAppLog("log", "at pages/API/voice/voice.vue:128", "received dirname" + this.dirName);
-      this.refreshRecordsList();
-      music = uni.createInnerAudioContext();
-      music.onEnded(() => {
-        clearInterval(playTimeInterval);
-        var playTime = 0;
-        formatAppLog("log", "at pages/API/voice/voice.vue:134", "play voice finished");
-        this.playing = false;
-        this.formatedPlayTime = formatTime(playTime);
-        this.playTime = playTime;
-      });
-      recorderManager = uni.getRecorderManager();
-      recorderManager.onStart(() => {
-        formatAppLog("log", "at pages/API/voice/voice.vue:141", "recorder start");
-        this.recording = true;
-        recordTimeInterval = setInterval(() => {
-          this.recordTime += 1;
-          this.formatedRecordTime = formatTime(this.recordTime);
-        }, 1e3);
-      });
-      recorderManager.onStop((res2) => {
-        formatAppLog("log", "at pages/API/voice/voice.vue:150", "on stop");
-        music.src = res2.tempFilePath;
-        uni.uploadFile({
-          url: "http://47.94.170.153/" + this.dirName + "/record",
-          filePath: res2.tempFilePath,
-          name: "record",
-          success: (res3) => {
-            uni.showToast({
-              title: "\u5F55\u97F3\u5DF2\u4FDD\u5B58",
-              icon: "none",
-              duration: 1200
-            });
-            this.refreshRecordsList();
-          },
-          complete: (res3) => {
-            formatAppLog("log", "at pages/API/voice/voice.vue:166", res3);
-          }
-        });
-        this.recording = false;
-      });
-      recorderManager.onError(() => {
-        formatAppLog("log", "at pages/API/voice/voice.vue:173", "recorder onError");
-      });
-      bgAudioManager = uni.getBackgroundAudioManager();
-      bgAudioManager.onEnded((res2) => {
-        if (!this.pausePlay) {
-          this.sleep(15e3);
-          this.randomPlayRecords();
-        }
-      });
+    created() {
+      this.popup = this.getParent();
     },
     methods: {
-      async startRecord() {
-        this.formatedRecordTime = "00:00:00";
-        let status = await this.checkPermission();
-        if (status !== 1) {
-          return;
+      getParent(name = "uniPopup") {
+        let parent = this.$parent;
+        let parentName = parent.$options.name;
+        while (parentName !== name) {
+          parent = parent.$parent;
+          if (!parent)
+            return false;
+          parentName = parent.$options.name;
         }
-        recorderManager.start({
-          format: "mp3"
-        });
-      },
-      getRecordUrl(file) {
-        return "http://47.94.170.153/storage/" + file;
-      },
-      refreshRecordsList() {
-        uni.request({
-          url: "http://47.94.170.153/" + this.dirName + "/records",
-          data: {
-            text: "uni.request"
-          },
-          header: {
-            "custom-header": "hello"
-          },
-          success: (res2) => {
-            formatAppLog("log", "at pages/API/voice/voice.vue:211", res2.data);
-            this.records = res2.data;
+        return parent;
+      }
+    }
+  };
+  const isObject = (val) => val !== null && typeof val === "object";
+  const defaultDelimiters = ["{", "}"];
+  class BaseFormatter {
+    constructor() {
+      this._caches = /* @__PURE__ */ Object.create(null);
+    }
+    interpolate(message, values, delimiters = defaultDelimiters) {
+      if (!values) {
+        return [message];
+      }
+      let tokens = this._caches[message];
+      if (!tokens) {
+        tokens = parse(message, delimiters);
+        this._caches[message] = tokens;
+      }
+      return compile(tokens, values);
+    }
+  }
+  const RE_TOKEN_LIST_VALUE = /^(?:\d)+/;
+  const RE_TOKEN_NAMED_VALUE = /^(?:\w)+/;
+  function parse(format, [startDelimiter, endDelimiter]) {
+    const tokens = [];
+    let position = 0;
+    let text = "";
+    while (position < format.length) {
+      let char = format[position++];
+      if (char === startDelimiter) {
+        if (text) {
+          tokens.push({ type: "text", value: text });
+        }
+        text = "";
+        let sub = "";
+        char = format[position++];
+        while (char !== void 0 && char !== endDelimiter) {
+          sub += char;
+          char = format[position++];
+        }
+        const isClosed = char === endDelimiter;
+        const type = RE_TOKEN_LIST_VALUE.test(sub) ? "list" : isClosed && RE_TOKEN_NAMED_VALUE.test(sub) ? "named" : "unknown";
+        tokens.push({ value: sub, type });
+      } else {
+        text += char;
+      }
+    }
+    text && tokens.push({ type: "text", value: text });
+    return tokens;
+  }
+  function compile(tokens, values) {
+    const compiled = [];
+    let index = 0;
+    const mode = Array.isArray(values) ? "list" : isObject(values) ? "named" : "unknown";
+    if (mode === "unknown") {
+      return compiled;
+    }
+    while (index < tokens.length) {
+      const token = tokens[index];
+      switch (token.type) {
+        case "text":
+          compiled.push(token.value);
+          break;
+        case "list":
+          compiled.push(values[parseInt(token.value, 10)]);
+          break;
+        case "named":
+          if (mode === "named") {
+            compiled.push(values[token.value]);
+          } else {
+            {
+              console.warn(`Type of token '${token.type}' and format of value '${mode}' don't match!`);
+            }
           }
+          break;
+        case "unknown":
+          {
+            console.warn(`Detect 'unknown' type of token!`);
+          }
+          break;
+      }
+      index++;
+    }
+    return compiled;
+  }
+  const LOCALE_ZH_HANS = "zh-Hans";
+  const LOCALE_ZH_HANT = "zh-Hant";
+  const LOCALE_EN = "en";
+  const LOCALE_FR = "fr";
+  const LOCALE_ES = "es";
+  const hasOwnProperty = Object.prototype.hasOwnProperty;
+  const hasOwn = (val, key) => hasOwnProperty.call(val, key);
+  const defaultFormatter = new BaseFormatter();
+  function include(str, parts) {
+    return !!parts.find((part) => str.indexOf(part) !== -1);
+  }
+  function startsWith(str, parts) {
+    return parts.find((part) => str.indexOf(part) === 0);
+  }
+  function normalizeLocale(locale, messages2) {
+    if (!locale) {
+      return;
+    }
+    locale = locale.trim().replace(/_/g, "-");
+    if (messages2 && messages2[locale]) {
+      return locale;
+    }
+    locale = locale.toLowerCase();
+    if (locale === "chinese") {
+      return LOCALE_ZH_HANS;
+    }
+    if (locale.indexOf("zh") === 0) {
+      if (locale.indexOf("-hans") > -1) {
+        return LOCALE_ZH_HANS;
+      }
+      if (locale.indexOf("-hant") > -1) {
+        return LOCALE_ZH_HANT;
+      }
+      if (include(locale, ["-tw", "-hk", "-mo", "-cht"])) {
+        return LOCALE_ZH_HANT;
+      }
+      return LOCALE_ZH_HANS;
+    }
+    const lang = startsWith(locale, [LOCALE_EN, LOCALE_FR, LOCALE_ES]);
+    if (lang) {
+      return lang;
+    }
+  }
+  class I18n {
+    constructor({ locale, fallbackLocale, messages: messages2, watcher, formater }) {
+      this.locale = LOCALE_EN;
+      this.fallbackLocale = LOCALE_EN;
+      this.message = {};
+      this.messages = {};
+      this.watchers = [];
+      if (fallbackLocale) {
+        this.fallbackLocale = fallbackLocale;
+      }
+      this.formater = formater || defaultFormatter;
+      this.messages = messages2 || {};
+      this.setLocale(locale || LOCALE_EN);
+      if (watcher) {
+        this.watchLocale(watcher);
+      }
+    }
+    setLocale(locale) {
+      const oldLocale = this.locale;
+      this.locale = normalizeLocale(locale, this.messages) || this.fallbackLocale;
+      if (!this.messages[this.locale]) {
+        this.messages[this.locale] = {};
+      }
+      this.message = this.messages[this.locale];
+      if (oldLocale !== this.locale) {
+        this.watchers.forEach((watcher) => {
+          watcher(this.locale, oldLocale);
         });
-      },
-      pausePlayRecords() {
-        this.pausePlay = true;
-      },
-      continuePlayRecords() {
-        this.pausePlay = false;
-        this.randomPlayRecords();
-      },
-      sleep(delay) {
-        var start = new Date().getTime();
-        while (new Date().getTime() - start < delay) {
-          continue;
-        }
-      },
-      randomPlayRecords() {
-        var recordSrc = this.records.pop();
-        bgAudioManager.src = "http://47.94.170.153/storage/" + recordSrc;
-        formatAppLog("log", "at pages/API/voice/voice.vue:232", bgAudioManager.src);
-        bgAudioManager.play();
-      },
-      stopRecord() {
-        recorderManager.stop();
-        clearInterval(recordTimeInterval);
-      },
-      playVoice() {
-        formatAppLog("log", "at pages/API/voice/voice.vue:240", "play voice");
-        this.playing = true;
-        playTimeInterval = setInterval(() => {
-          this.playTime += 1;
-          this.formatedPlayTime = formatTime(this.playTime);
-        }, 1e3);
-        music.play();
-      },
-      stopVoice() {
-        clearInterval(playTimeInterval);
-        this.playing = false;
-        this.formatedPlayTime = formatTime(0);
-        this.playTime = 0;
-        music.stop();
-      },
-      end() {
-        music.stop();
-        recorderManager.stop();
-        clearInterval(recordTimeInterval);
-        clearInterval(playTimeInterval);
-        this.recording = false, this.playing = false, this.hasRecord = false;
-        this.playTime = 0, this.recordTime = 0;
-        this.formatedRecordTime = "00:00:00", this.formatedRecordTime = "00:00:00";
-      },
-      clear() {
-        this.end();
-      },
-      async checkPermission() {
-        let status = permission.isIOS ? await permission.requestIOS("record") : await permission.requestAndroid("android.permission.RECORD_AUDIO");
-        if (status === null || status === 1) {
-          status = 1;
-        } else if (status === 2) {
-          uni.showModal({
-            content: "\u7CFB\u7EDF\u9EA6\u514B\u98CE\u5DF2\u5173\u95ED",
-            confirmText: "\u786E\u5B9A",
-            showCancel: false,
-            success: function(res2) {
-            }
-          });
+      }
+    }
+    getLocale() {
+      return this.locale;
+    }
+    watchLocale(fn2) {
+      const index = this.watchers.push(fn2) - 1;
+      return () => {
+        this.watchers.splice(index, 1);
+      };
+    }
+    add(locale, message, override = true) {
+      const curMessages = this.messages[locale];
+      if (curMessages) {
+        if (override) {
+          Object.assign(curMessages, message);
         } else {
-          uni.showModal({
-            content: "\u9700\u8981\u9EA6\u514B\u98CE\u6743\u9650",
-            confirmText: "\u8BBE\u7F6E",
-            success: function(res2) {
-              if (res2.confirm) {
-                permission.gotoAppSetting();
-              }
+          Object.keys(message).forEach((key) => {
+            if (!hasOwn(curMessages, key)) {
+              curMessages[key] = message[key];
             }
           });
         }
-        return status;
+      } else {
+        this.messages[locale] = message;
+      }
+    }
+    f(message, values, delimiters) {
+      return this.formater.interpolate(message, values, delimiters).join("");
+    }
+    t(key, locale, values) {
+      let message = this.message;
+      if (typeof locale === "string") {
+        locale = normalizeLocale(locale, this.messages);
+        locale && (message = this.messages[locale]);
+      } else {
+        values = locale;
+      }
+      if (!hasOwn(message, key)) {
+        console.warn(`Cannot translate the value of keypath ${key}. Use the value of keypath as default.`);
+        return key;
+      }
+      return this.formater.interpolate(message[key], values).join("");
+    }
+  }
+  function watchAppLocale(appVm, i18n) {
+    if (appVm.$watchLocale) {
+      appVm.$watchLocale((newLocale) => {
+        i18n.setLocale(newLocale);
+      });
+    } else {
+      appVm.$watch(() => appVm.$locale, (newLocale) => {
+        i18n.setLocale(newLocale);
+      });
+    }
+  }
+  function getDefaultLocale() {
+    if (typeof uni !== "undefined" && uni.getLocale) {
+      return uni.getLocale();
+    }
+    if (typeof global !== "undefined" && global.getLocale) {
+      return global.getLocale();
+    }
+    return LOCALE_EN;
+  }
+  function initVueI18n(locale, messages2 = {}, fallbackLocale, watcher) {
+    if (typeof locale !== "string") {
+      [locale, messages2] = [
+        messages2,
+        locale
+      ];
+    }
+    if (typeof locale !== "string") {
+      locale = getDefaultLocale();
+    }
+    if (typeof fallbackLocale !== "string") {
+      fallbackLocale = typeof __uniConfig !== "undefined" && __uniConfig.fallbackLocale || LOCALE_EN;
+    }
+    const i18n = new I18n({
+      locale,
+      fallbackLocale,
+      messages: messages2,
+      watcher
+    });
+    let t2 = (key, values) => {
+      if (typeof getApp !== "function") {
+        t2 = function(key2, values2) {
+          return i18n.t(key2, values2);
+        };
+      } else {
+        let isWatchedAppLocale = false;
+        t2 = function(key2, values2) {
+          const appVm = getApp().$vm;
+          if (appVm) {
+            appVm.$locale;
+            if (!isWatchedAppLocale) {
+              isWatchedAppLocale = true;
+              watchAppLocale(appVm, i18n);
+            }
+          }
+          return i18n.t(key2, values2);
+        };
+      }
+      return t2(key, values);
+    };
+    return {
+      i18n,
+      f(message, values, delimiters) {
+        return i18n.f(message, values, delimiters);
+      },
+      t(key, values) {
+        return t2(key, values);
+      },
+      add(locale2, message, override = true) {
+        return i18n.add(locale2, message, override);
+      },
+      watch(fn2) {
+        return i18n.watchLocale(fn2);
+      },
+      getLocale() {
+        return i18n.getLocale();
+      },
+      setLocale(newLocale) {
+        return i18n.setLocale(newLocale);
+      }
+    };
+  }
+  var en$6 = {
+    "uni-popup.cancel": "cancel",
+    "uni-popup.ok": "ok",
+    "uni-popup.placeholder": "pleace enter",
+    "uni-popup.title": "Hint",
+    "uni-popup.shareTitle": "Share to"
+  };
+  var zhHans$5 = {
+    "uni-popup.cancel": "\u53D6\u6D88",
+    "uni-popup.ok": "\u786E\u5B9A",
+    "uni-popup.placeholder": "\u8BF7\u8F93\u5165",
+    "uni-popup.title": "\u63D0\u793A",
+    "uni-popup.shareTitle": "\u5206\u4EAB\u5230"
+  };
+  var zhHant$5 = {
+    "uni-popup.cancel": "\u53D6\u6D88",
+    "uni-popup.ok": "\u78BA\u5B9A",
+    "uni-popup.placeholder": "\u8ACB\u8F38\u5165",
+    "uni-popup.title": "\u63D0\u793A",
+    "uni-popup.shareTitle": "\u5206\u4EAB\u5230"
+  };
+  var messages$5 = {
+    en: en$6,
+    "zh-Hans": zhHans$5,
+    "zh-Hant": zhHant$5
+  };
+  const { t: t$9 } = initVueI18n(messages$5);
+  const _sfc_main$1Y = {
+    name: "uniPopupDialog",
+    mixins: [popup],
+    emits: ["confirm", "close"],
+    props: {
+      value: {
+        type: [String, Number],
+        default: ""
+      },
+      placeholder: {
+        type: [String, Number],
+        default: ""
+      },
+      type: {
+        type: String,
+        default: "error"
+      },
+      mode: {
+        type: String,
+        default: "base"
+      },
+      title: {
+        type: String,
+        default: ""
+      },
+      content: {
+        type: String,
+        default: ""
+      },
+      beforeClose: {
+        type: Boolean,
+        default: false
+      },
+      cancelText: {
+        type: String,
+        default: ""
+      },
+      confirmText: {
+        type: String,
+        default: ""
+      }
+    },
+    data() {
+      return {
+        dialogType: "error",
+        focus: false,
+        val: ""
+      };
+    },
+    computed: {
+      okText() {
+        return this.confirmText || t$9("uni-popup.ok");
+      },
+      closeText() {
+        return this.cancelText || t$9("uni-popup.cancel");
+      },
+      placeholderText() {
+        return this.placeholder || t$9("uni-popup.placeholder");
+      },
+      titleText() {
+        return this.title || t$9("uni-popup.title");
+      }
+    },
+    watch: {
+      type(val) {
+        this.dialogType = val;
+      },
+      mode(val) {
+        if (val === "input") {
+          this.dialogType = "info";
+        }
+      },
+      value(val) {
+        this.val = val;
+      }
+    },
+    created() {
+      this.popup.disableMask();
+      if (this.mode === "input") {
+        this.dialogType = "info";
+        this.val = this.value;
+      } else {
+        this.dialogType = this.type;
+      }
+    },
+    mounted() {
+      this.focus = true;
+    },
+    methods: {
+      onOk() {
+        if (this.mode === "input") {
+          this.$emit("confirm", this.val);
+        } else {
+          this.$emit("confirm");
+        }
+        if (this.beforeClose)
+          return;
+        this.popup.close();
+      },
+      closeDialog() {
+        this.$emit("close");
+        if (this.beforeClose)
+          return;
+        this.popup.close();
+      },
+      close() {
+        this.popup.close();
       }
     }
   };
   function _sfc_render$1X(_ctx, _cache, $props, $setup, $data, $options) {
-    const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
-    return vue.openBlock(), vue.createElementBlock("view", null, [
-      vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
-      vue.createElementVNode("view", null, [
-        vue.createElementVNode("view", { class: "page-body" }, [
-          vue.createElementVNode("view", {
-            class: "page-section page-section-gap",
-            style: { "text-align": "center" }
-          }, [
-            (vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList($data.records, (record2, index) => {
-              return vue.openBlock(), vue.createElementBlock("audio", {
-                key: index,
-                id: record2 + index,
-                src: $options.getRecordUrl(record2),
-                style: { "text-align": "left" },
-                action: $data.audioAction,
-                controls: ""
-              }, null, 8, ["id", "src", "action"]);
-            }), 128))
-          ]),
-          vue.createElementVNode("view", { class: "uni-padding-wrap uni-common-mt" }, [
-            vue.createElementVNode("button", {
-              type: "primary",
-              onClick: _cache[0] || (_cache[0] = (...args) => $options.randomPlayRecords && $options.randomPlayRecords(...args))
-            }, "\u968F\u673A\u64AD\u653E")
-          ]),
-          vue.createElementVNode("view", { class: "uni-padding-wrap uni-common-mt" }, [
-            vue.createElementVNode("button", {
-              type: "primary",
-              onClick: _cache[1] || (_cache[1] = (...args) => $options.pausePlayRecords && $options.pausePlayRecords(...args))
-            }, "\u6682\u505C\u64AD\u653E")
-          ]),
-          vue.createElementVNode("view", { class: "uni-padding-wrap uni-common-mt" }, [
-            vue.createElementVNode("button", {
-              type: "primary",
-              onClick: _cache[2] || (_cache[2] = (...args) => $options.continuePlayRecords && $options.continuePlayRecords(...args))
-            }, "\u6062\u590D\u64AD\u653E")
-          ]),
-          vue.createElementVNode("view", { class: "uni-padding-wrap uni-common-mt" }, [
-            vue.createElementVNode("button", {
-              type: "primary",
-              onClick: _cache[3] || (_cache[3] = (...args) => $options.refreshRecordsList && $options.refreshRecordsList(...args))
-            }, "\u91CD\u65B0\u64AD\u653E")
-          ])
-        ])
+    return vue.openBlock(), vue.createElementBlock("view", { class: "uni-popup-dialog" }, [
+      vue.createElementVNode("view", { class: "uni-dialog-title" }, [
+        vue.createElementVNode("text", {
+          class: vue.normalizeClass(["uni-dialog-title-text", ["uni-popup__" + $data.dialogType]])
+        }, vue.toDisplayString($options.titleText), 3)
       ]),
-      vue.createElementVNode("view", { class: "uni-padding-wrap" }, [
-        !$data.recording && !$data.playing && !$data.hasRecord ? (vue.openBlock(), vue.createElementBlock(vue.Fragment, { key: 0 }, [
-          vue.createElementVNode("view", { class: "page-body-time" }, [
-            vue.createElementVNode("text", { class: "time-big" }, vue.toDisplayString($data.formatedRecordTime), 1)
-          ]),
-          vue.createElementVNode("view", { class: "page-body-buttons" }, [
-            vue.createElementVNode("view", { class: "page-body-button" }),
-            vue.createElementVNode("view", {
-              class: "page-body-button",
-              onClick: _cache[4] || (_cache[4] = (...args) => $options.startRecord && $options.startRecord(...args))
-            }, [
-              vue.createElementVNode("image", { src: "/static/record.png" })
-            ]),
-            vue.createElementVNode("view", { class: "page-body-button" })
-          ])
-        ], 64)) : vue.createCommentVNode("v-if", true),
-        $data.recording === true ? (vue.openBlock(), vue.createElementBlock(vue.Fragment, { key: 1 }, [
-          vue.createElementVNode("view", { class: "page-body-time" }, [
-            vue.createElementVNode("text", { class: "time-big" }, vue.toDisplayString($data.formatedRecordTime), 1)
-          ]),
-          vue.createElementVNode("view", { class: "page-body-buttons" }, [
-            vue.createElementVNode("view", { class: "page-body-button" }),
-            vue.createElementVNode("view", {
-              class: "page-body-button",
-              onClick: _cache[5] || (_cache[5] = (...args) => $options.stopRecord && $options.stopRecord(...args))
-            }, [
-              vue.createElementVNode("view", { class: "button-stop-record" })
-            ]),
-            vue.createElementVNode("view", { class: "page-body-button" })
-          ])
-        ], 64)) : vue.createCommentVNode("v-if", true),
-        $data.hasRecord === true && $data.playing === false ? (vue.openBlock(), vue.createElementBlock(vue.Fragment, { key: 2 }, [
-          vue.createElementVNode("view", { class: "page-body-time" }, [
-            vue.createElementVNode("text", { class: "time-big" }, vue.toDisplayString($data.formatedPlayTime), 1),
-            vue.createElementVNode("text", { class: "time-small" }, vue.toDisplayString($data.formatedRecordTime), 1)
-          ]),
-          vue.createElementVNode("view", { class: "page-body-buttons" }, [
-            vue.createElementVNode("view", {
-              class: "page-body-button",
-              onClick: _cache[6] || (_cache[6] = (...args) => $options.playVoice && $options.playVoice(...args))
-            }, [
-              vue.createElementVNode("image", { src: "/static/play.png" })
-            ]),
-            vue.createElementVNode("view", {
-              class: "page-body-button",
-              onClick: _cache[7] || (_cache[7] = (...args) => $options.clear && $options.clear(...args))
-            }, [
-              vue.createElementVNode("image", { src: "/static/trash.png" })
-            ])
-          ])
-        ], 64)) : vue.createCommentVNode("v-if", true),
-        $data.hasRecord === true && $data.playing === true ? (vue.openBlock(), vue.createElementBlock(vue.Fragment, { key: 3 }, [
-          vue.createElementVNode("view", { class: "page-body-time" }, [
-            vue.createElementVNode("text", { class: "time-big" }, vue.toDisplayString($data.formatedPlayTime), 1),
-            vue.createElementVNode("text", { class: "time-small" }, vue.toDisplayString($data.formatedRecordTime), 1)
-          ]),
-          vue.createElementVNode("view", { class: "page-body-buttons" }, [
-            vue.createElementVNode("view", {
-              class: "page-body-button",
-              onClick: _cache[8] || (_cache[8] = (...args) => $options.stopVoice && $options.stopVoice(...args))
-            }, [
-              vue.createElementVNode("image", { src: "/static/stop.png" })
-            ]),
-            vue.createElementVNode("view", {
-              class: "page-body-button",
-              onClick: _cache[9] || (_cache[9] = (...args) => $options.clear && $options.clear(...args))
-            }, [
-              vue.createElementVNode("image", { src: "/static/trash.png" })
-            ])
-          ])
-        ], 64)) : vue.createCommentVNode("v-if", true)
-      ])
-    ]);
-  }
-  var PagesAPIVoiceVoice = /* @__PURE__ */ _export_sfc(_sfc_main$1Y, [["render", _sfc_render$1X], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/voice/voice.vue"]]);
-  const audioUrl = "https://vkceyugu.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3";
-  const _sfc_main$1X = {
-    data() {
-      return {
-        title: "innerAudioContext",
-        isPlaying: false,
-        isPlayEnd: false,
-        currentTime: 0,
-        duration: 100
-      };
-    },
-    computed: {
-      position() {
-        return this.isPlayEnd ? 0 : this.currentTime;
-      },
-      playImage() {
-        return this.isPlaying ? "/static/pause.png" : "/static/play.png";
-      }
-    },
-    onLoad() {
-      this._isChanging = false;
-      this._audioContext = null;
-      this.createAudio();
-    },
-    onUnload() {
-      if (this._audioContext != null && this.isPlaying) {
-        this.stop();
-      }
-    },
-    methods: {
-      createAudio() {
-        var innerAudioContext = this._audioContext = uni.createInnerAudioContext();
-        innerAudioContext.autoplay = false;
-        innerAudioContext.src = audioUrl;
-        innerAudioContext.onPlay(() => {
-          formatAppLog("log", "at pages/API/inner-audio/inner-audio.vue:52", "\u5F00\u59CB\u64AD\u653E");
-        });
-        innerAudioContext.onTimeUpdate((e) => {
-          if (this._isChanging === true) {
-            return;
-          }
-          this.currentTime = innerAudioContext.currentTime || 0;
-          this.duration = innerAudioContext.duration || 0;
-        });
-        innerAudioContext.onEnded(() => {
-          this.currentTime = 0;
-          this.isPlaying = false;
-          this.isPlayEnd = true;
-        });
-        innerAudioContext.onError((res2) => {
-          this.isPlaying = false;
-          formatAppLog("log", "at pages/API/inner-audio/inner-audio.vue:68", res2.errMsg);
-          formatAppLog("log", "at pages/API/inner-audio/inner-audio.vue:69", res2.errCode);
-        });
-        return innerAudioContext;
-      },
-      onchanging() {
-        this._isChanging = true;
-      },
-      onchange(e) {
-        formatAppLog("log", "at pages/API/inner-audio/inner-audio.vue:77", e.detail.value);
-        formatAppLog("log", "at pages/API/inner-audio/inner-audio.vue:78", typeof e.detail.value);
-        this._audioContext.seek(e.detail.value);
-        this._isChanging = false;
-      },
-      play() {
-        if (this.isPlaying) {
-          this.pause();
-          return;
-        }
-        this.isPlaying = true;
-        this._audioContext.play();
-        this.isPlayEnd = false;
-      },
-      pause() {
-        this._audioContext.pause();
-        this.isPlaying = false;
-      },
-      stop() {
-        this._audioContext.stop();
-        this.isPlaying = false;
-      }
-    }
-  };
-  function _sfc_render$1W(_ctx, _cache, $props, $setup, $data, $options) {
-    const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
-    return vue.openBlock(), vue.createElementBlock("view", { class: "uni-padding-wrap" }, [
-      vue.createVNode(_component_page_head, { title: "audio" }),
-      vue.createElementVNode("view", { class: "uni-common-mt" }, [
-        vue.createElementVNode("slider", {
-          value: $options.position,
-          min: 0,
-          max: $data.duration,
-          onChanging: _cache[0] || (_cache[0] = (...args) => $options.onchanging && $options.onchanging(...args)),
-          onChange: _cache[1] || (_cache[1] = (...args) => $options.onchange && $options.onchange(...args))
-        }, null, 40, ["value", "max"])
-      ]),
-      vue.createCommentVNode(' <view class="uni-common-mt play-time-area">\n			<text class="current-time">{{currentTime}}</text>\n			<text class="duration">{{duration}}</text>\n		</view> '),
-      vue.createElementVNode("view", { class: "play-button-area" }, [
-        vue.createElementVNode("image", {
-          class: "icon-play",
-          src: $options.playImage,
-          onClick: _cache[2] || (_cache[2] = (...args) => $options.play && $options.play(...args))
-        }, null, 8, ["src"])
-      ])
-    ]);
-  }
-  var PagesAPIInnerAudioInnerAudio = /* @__PURE__ */ _export_sfc(_sfc_main$1X, [["render", _sfc_render$1W], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/inner-audio/inner-audio.vue"]]);
-  const _sfc_main$1W = {
-    data() {
-      return {
-        title: "backgroundAudio",
-        bgAudioMannager: null,
-        dataUrl: "https://vkceyugu.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3",
-        playing: false,
-        playTime: 0,
-        formatedPlayTime: "00:00:00"
-      };
-    },
-    onLoad: function() {
-      this.playing = this.$backgroundAudioData.playing;
-      this.playTime = this.$backgroundAudioData.playTime;
-      this.formatedPlayTime = this.$backgroundAudioData.formatedPlayTime;
-      let bgAudioMannager = uni.getBackgroundAudioManager();
-      if (!bgAudioMannager.title) {
-        bgAudioMannager.title = "\u81F4\u7231\u4E3D\u4E1D";
-      }
-      if (!bgAudioMannager.singer) {
-        bgAudioMannager.singer = "\u6682\u65E0";
-      }
-      if (!bgAudioMannager.coverImgUrl) {
-        bgAudioMannager.coverImgUrl = "https://vkceyugu.cdn.bspapp.com/VKCEYUGU-dc-site/c517b410-5184-11eb-b997-9918a5dda011.jpeg";
-      }
-      bgAudioMannager.onPlay(() => {
-        formatAppLog("log", "at pages/API/background-audio/background-audio.vue:68", "\u5F00\u59CB\u64AD\u653E");
-        this.$backgroundAudioData.playing = this.playing = true;
-      });
-      bgAudioMannager.onPause(() => {
-        formatAppLog("log", "at pages/API/background-audio/background-audio.vue:72", "\u6682\u505C\u64AD\u653E");
-        this.$backgroundAudioData.playing = this.playing = false;
-      });
-      bgAudioMannager.onEnded(() => {
-        this.playing = false;
-        this.$backgroundAudioData.playing = false;
-        this.$backgroundAudioData.playTime = this.playTime = 0;
-        this.$backgroundAudioData.formatedPlayTime = this.formatedPlayTime = formatTime(0);
-      });
-      bgAudioMannager.onTimeUpdate((e) => {
-        if (Math.floor(bgAudioMannager.currentTime) > Math.floor(this.playTime)) {
-          this.$backgroundAudioData.formatedPlayTime = this.formatedPlayTime = formatTime(Math.floor(bgAudioMannager.currentTime));
-        }
-        this.$backgroundAudioData.playTime = this.playTime = bgAudioMannager.currentTime;
-      });
-      this.bgAudioMannager = bgAudioMannager;
-    },
-    methods: {
-      play: function(res2) {
-        if (!this.bgAudioMannager.src) {
-          this.bgAudioMannager.startTime = this.playTime;
-          this.bgAudioMannager.src = this.dataUrl;
-        } else {
-          this.bgAudioMannager.seek(this.playTime);
-          this.bgAudioMannager.play();
-        }
-      },
-      seek: function(e) {
-        this.bgAudioMannager.seek(e.detail.value);
-      },
-      pause: function() {
-        this.bgAudioMannager.pause();
-      },
-      stop: function() {
-        this.bgAudioMannager.stop();
-        this.$backgroundAudioData.playing = this.playing = false;
-        this.$backgroundAudioData.playTime = this.playTime = 0;
-        this.$backgroundAudioData.formatedPlayTime = this.formatedPlayTime = formatTime(0);
-      }
-    }
-  };
-  function _sfc_render$1V(_ctx, _cache, $props, $setup, $data, $options) {
-    const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
-    return vue.openBlock(), vue.createElementBlock("view", null, [
-      vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
-      vue.createElementVNode("view", { class: "uni-padding-wrap" }, [
-        vue.createElementVNode("view", { class: "uni-center" }, [
-          vue.createElementVNode("text", { class: "time-big" }, vue.toDisplayString($data.formatedPlayTime), 1)
-        ]),
-        vue.createElementVNode("view", { class: "uni-common-mt" }, [
-          vue.createElementVNode("slider", {
-            class: "slider",
-            min: "0",
-            max: "21",
-            step: "1",
-            value: $data.playTime,
-            onChange: _cache[0] || (_cache[0] = (...args) => $options.seek && $options.seek(...args))
-          }, null, 40, ["value"])
-        ]),
-        vue.createElementVNode("view", { class: "play-time" }, [
-          vue.createElementVNode("text", null, "00:00"),
-          vue.createElementVNode("text", null, "00:21")
-        ]),
-        vue.createElementVNode("view", { class: "uni-hello-text" }, "\u6CE8\u610F\uFF1A\u79BB\u5F00\u5F53\u524D\u9875\u9762\u540E\u80CC\u666F\u97F3\u4E50\u5C06\u4FDD\u6301\u64AD\u653E\uFF0C\u4F46\u9000\u51FAuni-app\u5C06\u505C\u6B62"),
-        vue.createElementVNode("view", { class: "page-body-buttons" }, [
-          $data.playing ? (vue.openBlock(), vue.createElementBlock(vue.Fragment, { key: 0 }, [
-            vue.createElementVNode("view", {
-              class: "page-body-button",
-              onClick: _cache[1] || (_cache[1] = (...args) => $options.stop && $options.stop(...args))
-            }, [
-              vue.createElementVNode("image", { src: "/static/stop.png" })
-            ]),
-            vue.createElementVNode("view", {
-              class: "page-body-button",
-              onClick: _cache[2] || (_cache[2] = (...args) => $options.pause && $options.pause(...args))
-            }, [
-              vue.createElementVNode("image", { src: "/static/pause.png" })
-            ])
-          ], 64)) : vue.createCommentVNode("v-if", true),
-          !$data.playing ? (vue.openBlock(), vue.createElementBlock(vue.Fragment, { key: 1 }, [
-            vue.createElementVNode("view", { class: "page-body-button" }),
-            vue.createElementVNode("view", {
-              class: "page-body-button",
-              onClick: _cache[3] || (_cache[3] = (...args) => $options.play && $options.play(...args))
-            }, [
-              vue.createElementVNode("image", { src: "/static/play.png" })
-            ])
-          ], 64)) : vue.createCommentVNode("v-if", true),
-          vue.createElementVNode("view", { class: "page-body-button" })
-        ])
-      ])
-    ]);
-  }
-  var PagesAPIBackgroundAudioBackgroundAudio = /* @__PURE__ */ _export_sfc(_sfc_main$1W, [["render", _sfc_render$1V], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/background-audio/background-audio.vue"]]);
-  var sourceType = [
-    ["camera"],
-    ["album"],
-    ["camera", "album"]
-  ];
-  const _sfc_main$1V = {
-    data() {
-      return {
-        title: "chooseVideo",
-        sourceTypeIndex: 2,
-        sourceType: ["\u62CD\u6444", "\u76F8\u518C", "\u62CD\u6444\u6216\u76F8\u518C"],
-        src: "",
-        cameraList: [
-          {
-            value: "back",
-            name: "\u540E\u7F6E\u6444\u50CF\u5934",
-            checked: "true"
-          },
-          {
-            value: "front",
-            name: "\u524D\u7F6E\u6444\u50CF\u5934"
-          }
-        ],
-        cameraIndex: 0
-      };
-    },
-    onUnload() {
-      this.src = "", this.sourceTypeIndex = 2, this.sourceType = ["\u62CD\u6444", "\u76F8\u518C", "\u62CD\u6444\u6216\u76F8\u518C"];
-    },
-    methods: {
-      radioChange(evt) {
-        for (let i2 = 0; i2 < this.cameraList.length; i2++) {
-          if (this.cameraList[i2].value === evt.detail.value) {
-            this.cameraIndex = i2;
-            break;
-          }
-        }
-      },
-      sourceTypeChange: function(e) {
-        this.sourceTypeIndex = parseInt(e.detail.value);
-      },
-      chooseVideo: function() {
-        uni.chooseVideo({
-          camera: this.cameraList[this.cameraIndex].value,
-          sourceType: sourceType[this.sourceTypeIndex],
-          success: (res2) => {
-            this.src = res2.tempFilePath;
-          },
-          fail: (err) => {
-          }
-        });
-      }
-    }
-  };
-  function _sfc_render$1U(_ctx, _cache, $props, $setup, $data, $options) {
-    const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
-    return vue.openBlock(), vue.createElementBlock("view", null, [
-      vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
-      vue.createElementVNode("view", { class: "uni-common-mt" }, [
-        vue.createElementVNode("view", { class: "uni-list" }, [
-          vue.createElementVNode("view", { class: "uni-list-cell" }, [
-            vue.createElementVNode("view", { class: "uni-list-cell-left" }, [
-              vue.createElementVNode("view", { class: "uni-label" }, "\u89C6\u9891\u6765\u6E90")
-            ]),
-            vue.createElementVNode("view", { class: "uni-list-cell-right" }, [
-              vue.createElementVNode("picker", {
-                range: $data.sourceType,
-                onChange: _cache[0] || (_cache[0] = (...args) => $options.sourceTypeChange && $options.sourceTypeChange(...args)),
-                value: $data.sourceTypeIndex
-              }, [
-                vue.createElementVNode("view", { class: "uni-input" }, vue.toDisplayString($data.sourceType[$data.sourceTypeIndex]), 1)
-              ], 40, ["range", "value"])
-            ])
-          ])
-        ])
-      ]),
-      vue.createElementVNode("view", { class: "uni-title uni-common-mt uni-common-pl" }, "\u6444\u50CF\u5934\u4F4D\u7F6E"),
-      vue.createElementVNode("view", { class: "uni-hello-text camera-tips" }, "\u6CE8\u610F\uFF1A\u90E8\u5206 Android \u624B\u673A\u4E0B\u7531\u4E8E\u7CFB\u7EDF ROM \u4E0D\u652F\u6301\u65E0\u6CD5\u751F\u6548\uFF0C\u6253\u5F00\u62CD\u6444\u754C\u9762\u540E\u53EF\u64CD\u4F5C\u5207\u6362"),
-      vue.createElementVNode("view", { class: "uni-list" }, [
-        vue.createElementVNode("radio-group", {
-          onChange: _cache[1] || (_cache[1] = (...args) => $options.radioChange && $options.radioChange(...args))
-        }, [
-          (vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList($data.cameraList, (item, index) => {
-            return vue.openBlock(), vue.createElementBlock("label", {
-              class: "uni-list-cell uni-list-cell-pd",
-              key: item.value
-            }, [
-              vue.createElementVNode("radio", {
-                value: item.value,
-                checked: index === $data.cameraIndex
-              }, vue.toDisplayString(item.name), 9, ["value", "checked"])
-            ]);
-          }), 128))
-        ], 32)
-      ]),
-      !$data.src ? (vue.openBlock(), vue.createElementBlock("view", {
+      $props.mode === "base" ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 0,
-        class: "uni-hello-addfile",
-        onClick: _cache[2] || (_cache[2] = (...args) => $options.chooseVideo && $options.chooseVideo(...args))
-      }, "+ \u6DFB\u52A0\u89C6\u9891")) : (vue.openBlock(), vue.createElementBlock("video", {
+        class: "uni-dialog-content"
+      }, [
+        vue.renderSlot(_ctx.$slots, "default", {}, () => [
+          vue.createElementVNode("text", { class: "uni-dialog-content-text" }, vue.toDisplayString($props.content), 1)
+        ], true)
+      ])) : (vue.openBlock(), vue.createElementBlock("view", {
         key: 1,
-        src: $data.src,
-        class: "video"
-      }, null, 8, ["src"]))
-    ]);
-  }
-  var PagesAPIVideoVideo = /* @__PURE__ */ _export_sfc(_sfc_main$1V, [["render", _sfc_render$1U], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/video/video.vue"]]);
-  const _sfc_main$1U = {
-    data() {
-      return {
-        title: "saveFile",
-        tempFilePath: "",
-        savedFilePath: ""
-      };
-    },
-    onLoad() {
-      this.savedFilePath = uni.getStorageSync("savedFilePath");
-    },
-    methods: {
-      chooseImage() {
-        uni.chooseImage({
-          count: 1,
-          success: (res2) => {
-            this.tempFilePath = res2.tempFilePaths[0];
-          },
-          fail: (err) => {
-          }
-        });
-      },
-      saveFile() {
-        if (this.tempFilePath.length > 0) {
-          uni.saveFile({
-            tempFilePath: this.tempFilePath,
-            success: (res2) => {
-              this.savedFilePath = res2.savedFilePath;
-              uni.setStorageSync("savedFilePath", res2.savedFilePath);
-              uni.showModal({
-                title: "\u4FDD\u5B58\u6210\u529F",
-                content: "\u4E0B\u6B21\u8FDB\u5165\u9875\u9762\u65F6\uFF0C\u6B64\u6587\u4EF6\u4ECD\u53EF\u7528",
-                showCancel: false
-              });
-            },
-            fail: (res2) => {
-              uni.showModal({
-                title: "\u4FDD\u5B58\u5931\u8D25",
-                content: "\u5931\u8D25\u539F\u56E0: " + JSON.stringify(res2),
-                showCancel: false
-              });
-            }
-          });
-        } else {
-          uni.showModal({
-            content: "\u8BF7\u9009\u62E9\u6587\u4EF6",
-            showCancel: false
-          });
-        }
-      },
-      clear() {
-        uni.setStorageSync("savedFilePath", "");
-        this.tempFilePath = "";
-        this.savedFilePath = "";
-      },
-      openDocument() {
-        uni.downloadFile({
-          url: "https://vkceyugu.cdn.bspapp.com/VKCEYUGU-dc-site/b3f1d0b0-5168-11eb-bd01-97bc1429a9ff.pdf",
-          success: (res2) => {
-            uni.openDocument({
-              filePath: res2.tempFilePath,
-              success: () => {
-                formatAppLog("log", "at pages/API/file/file.vue:108", "\u6253\u5F00\u6587\u6863\u6210\u529F");
-              }
-            });
-          }
-        });
-      }
-    }
-  };
-  function _sfc_render$1T(_ctx, _cache, $props, $setup, $data, $options) {
-    const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
-    return vue.openBlock(), vue.createElementBlock("view", null, [
-      vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
-      vue.createElementVNode("view", { class: "uni-padding-wrap uni-common-mt" }, [
-        $data.tempFilePath ? (vue.openBlock(), vue.createElementBlock("image", {
-          key: 0,
-          src: $data.tempFilePath,
-          class: "image",
-          mode: "aspectFit"
-        }, null, 8, ["src"])) : vue.createCommentVNode("v-if", true),
-        !$data.tempFilePath && $data.savedFilePath ? (vue.openBlock(), vue.createElementBlock("image", {
-          key: 1,
-          src: $data.savedFilePath,
-          class: "image",
-          mode: "aspectFit"
-        }, null, 8, ["src"])) : vue.createCommentVNode("v-if", true),
-        !$data.tempFilePath && !$data.savedFilePath ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 2,
-          class: "uni-hello-addfile",
-          onClick: _cache[0] || (_cache[0] = (...args) => $options.chooseImage && $options.chooseImage(...args))
-        }, "+ \u8BF7\u9009\u62E9\u6587\u4EF6")) : vue.createCommentVNode("v-if", true),
-        vue.createElementVNode("view", { class: "uni-btn-v" }, [
-          vue.createElementVNode("button", {
-            class: "btn-savefile",
-            onClick: _cache[1] || (_cache[1] = (...args) => $options.saveFile && $options.saveFile(...args))
-          }, "\u4FDD\u5B58\u6587\u4EF6"),
-          vue.createElementVNode("button", {
-            onClick: _cache[2] || (_cache[2] = (...args) => $options.clear && $options.clear(...args))
-          }, "\u5220\u9664\u6587\u4EF6")
+        class: "uni-dialog-content"
+      }, [
+        vue.renderSlot(_ctx.$slots, "default", {}, () => [
+          vue.withDirectives(vue.createElementVNode("input", {
+            class: "uni-dialog-input",
+            "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $data.val = $event),
+            type: "text",
+            placeholder: $options.placeholderText,
+            focus: $data.focus
+          }, null, 8, ["placeholder", "focus"]), [
+            [vue.vModelText, $data.val]
+          ])
+        ], true)
+      ])),
+      vue.createElementVNode("view", { class: "uni-dialog-button-group" }, [
+        vue.createElementVNode("view", {
+          class: "uni-dialog-button",
+          onClick: _cache[1] || (_cache[1] = (...args) => $options.closeDialog && $options.closeDialog(...args))
+        }, [
+          vue.createElementVNode("text", { class: "uni-dialog-button-text" }, vue.toDisplayString($options.closeText), 1)
         ]),
-        vue.createElementVNode("view", { class: "btn-area" }, [
-          vue.createElementVNode("button", {
-            onClick: _cache[3] || (_cache[3] = (...args) => $options.openDocument && $options.openDocument(...args))
-          }, "\u6253\u5F00pdf\u6587\u4EF6")
+        vue.createElementVNode("view", {
+          class: "uni-dialog-button uni-border-left",
+          onClick: _cache[2] || (_cache[2] = (...args) => $options.onOk && $options.onOk(...args))
+        }, [
+          vue.createElementVNode("text", { class: "uni-dialog-button-text uni-button-color" }, vue.toDisplayString($options.okText), 1)
         ])
       ])
     ]);
   }
-  var PagesAPIFileFile = /* @__PURE__ */ _export_sfc(_sfc_main$1U, [["render", _sfc_render$1T], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/file/file.vue"]]);
+  var __easycom_4$2 = /* @__PURE__ */ _export_sfc(_sfc_main$1Y, [["render", _sfc_render$1X], ["__scopeId", "data-v-6f54520a"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-popup/components/uni-popup-dialog/uni-popup-dialog.vue"]]);
   class MPAnimation {
     constructor(options, _this) {
       this.options = options;
@@ -10509,7 +10170,7 @@ if (uni.restoreGlobal) {
     clearTimeout(_this.timer);
     return new MPAnimation(option, _this);
   }
-  const _sfc_main$1T = {
+  const _sfc_main$1X = {
     name: "uniTransition",
     emits: ["click", "change"],
     props: {
@@ -10734,7 +10395,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1S(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1W(_ctx, _cache, $props, $setup, $data, $options) {
     return $data.isShow ? (vue.openBlock(), vue.createElementBlock("view", {
       key: 0,
       ref: "ani",
@@ -10746,8 +10407,8 @@ if (uni.restoreGlobal) {
       vue.renderSlot(_ctx.$slots, "default")
     ], 14, ["animation"])) : vue.createCommentVNode("v-if", true);
   }
-  var __easycom_1$m = /* @__PURE__ */ _export_sfc(_sfc_main$1T, [["render", _sfc_render$1S], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-transition/components/uni-transition/uni-transition.vue"]]);
-  const _sfc_main$1S = {
+  var __easycom_1$m = /* @__PURE__ */ _export_sfc(_sfc_main$1X, [["render", _sfc_render$1W], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-transition/components/uni-transition/uni-transition.vue"]]);
+  const _sfc_main$1W = {
     name: "uniPopup",
     components: {},
     emits: ["change", "maskClick"],
@@ -11044,7 +10705,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1R(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1V(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_uni_transition = resolveEasycom(vue.resolveDynamicComponent("uni-transition"), __easycom_1$m);
     return $data.showPopup ? (vue.openBlock(), vue.createElementBlock("view", {
       key: 0,
@@ -11085,9 +10746,891 @@ if (uni.restoreGlobal) {
       ], 32)
     ], 2)) : vue.createCommentVNode("v-if", true);
   }
-  var __easycom_2$9 = /* @__PURE__ */ _export_sfc(_sfc_main$1S, [["render", _sfc_render$1R], ["__scopeId", "data-v-7c43d41b"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-popup/components/uni-popup/uni-popup.vue"]]);
-  var formatLocation$1 = formatLocation$2;
+  var __easycom_2$9 = /* @__PURE__ */ _export_sfc(_sfc_main$1W, [["render", _sfc_render$1V], ["__scopeId", "data-v-7c43d41b"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-popup/components/uni-popup/uni-popup.vue"]]);
+  function formatTime(time) {
+    if (typeof time !== "number" || time < 0) {
+      return time;
+    }
+    var hour = parseInt(time / 3600);
+    time = time % 3600;
+    var minute = parseInt(time / 60);
+    time = time % 60;
+    var second = time;
+    return [hour, minute, second].map(function(n2) {
+      n2 = n2.toString();
+      return n2[1] ? n2 : "0" + n2;
+    }).join(":");
+  }
+  function formatLocation$2(longitude, latitude) {
+    if (typeof longitude === "string" && typeof latitude === "string") {
+      longitude = parseFloat(longitude);
+      latitude = parseFloat(latitude);
+    }
+    longitude = longitude.toFixed(2);
+    latitude = latitude.toFixed(2);
+    return {
+      longitude: longitude.toString().split("."),
+      latitude: latitude.toString().split(".")
+    };
+  }
+  var dateUtils = {
+    UNITS: {
+      "\u5E74": 315576e5,
+      "\u6708": 26298e5,
+      "\u5929": 864e5,
+      "\u5C0F\u65F6": 36e5,
+      "\u5206\u949F": 6e4,
+      "\u79D2": 1e3
+    },
+    humanize: function(milliseconds) {
+      var humanize = "";
+      for (var key in this.UNITS) {
+        if (milliseconds >= this.UNITS[key]) {
+          humanize = Math.floor(milliseconds / this.UNITS[key]) + key + "\u524D";
+          break;
+        }
+      }
+      return humanize || "\u521A\u521A";
+    },
+    format: function(dateStr) {
+      var date = this.parse(dateStr);
+      var diff = Date.now() - date.getTime();
+      if (diff < this.UNITS["\u5929"]) {
+        return this.humanize(diff);
+      }
+      var _format = function(number) {
+        return number < 10 ? "0" + number : number;
+      };
+      return date.getFullYear() + "/" + _format(date.getMonth() + 1) + "/" + _format(date.getDate()) + "-" + _format(date.getHours()) + ":" + _format(date.getMinutes());
+    },
+    parse: function(str) {
+      var a2 = str.split(/[^0-9]/);
+      return new Date(a2[0], a2[1] - 1, a2[2], a2[3], a2[4], a2[5]);
+    }
+  };
+  var playTimeInterval = null;
+  var recordTimeInterval = null;
+  var recorderManager = null;
+  var music = null;
+  var bgAudioManager = null;
+  const _sfc_main$1V = {
+    data() {
+      return {
+        title: "start/stopRecord\u3001play/stopVoice",
+        recording: false,
+        playing: false,
+        hasRecord: false,
+        bgPlaying: false,
+        tempFilePath: "",
+        pausePlay: false,
+        recordTime: 0,
+        playTime: 0,
+        pauseSeconds: 15,
+        formatedRecordTime: "00:00:00",
+        formatedPlayTime: "00:00:00",
+        records: [],
+        dirName: "Chinese",
+        audioAction: {
+          method: "pause"
+        }
+      };
+    },
+    onUnload: function() {
+      this.end();
+    },
+    onLoad: function(option) {
+      if (option.dirName) {
+        this.dirName = option.dirName;
+      }
+      formatAppLog("log", "at pages/API/voice/voice.vue:140", "received dirname" + this.dirName);
+      this.refreshRecordsList();
+      music = uni.createInnerAudioContext();
+      music.onEnded(() => {
+        clearInterval(playTimeInterval);
+        var playTime = 0;
+        formatAppLog("log", "at pages/API/voice/voice.vue:146", "play voice finished");
+        this.playing = false;
+        this.formatedPlayTime = formatTime(playTime);
+        this.playTime = playTime;
+      });
+      recorderManager = uni.getRecorderManager();
+      recorderManager.onStart(() => {
+        formatAppLog("log", "at pages/API/voice/voice.vue:153", "recorder start");
+        this.recording = true;
+        recordTimeInterval = setInterval(() => {
+          this.recordTime += 1;
+          this.formatedRecordTime = formatTime(this.recordTime);
+        }, 1e3);
+      });
+      recorderManager.onStop((res2) => {
+        formatAppLog("log", "at pages/API/voice/voice.vue:162", "on stop");
+        music.src = res2.tempFilePath;
+        uni.uploadFile({
+          url: "http://47.94.170.153/" + this.dirName + "/record",
+          filePath: res2.tempFilePath,
+          name: "record",
+          success: (res3) => {
+            uni.showToast({
+              title: "\u5F55\u97F3\u5DF2\u4FDD\u5B58",
+              icon: "none",
+              duration: 1200
+            });
+            this.refreshRecordsList();
+          },
+          complete: (res3) => {
+            formatAppLog("log", "at pages/API/voice/voice.vue:178", res3);
+          }
+        });
+        this.recording = false;
+      });
+      recorderManager.onError(() => {
+        formatAppLog("log", "at pages/API/voice/voice.vue:185", "recorder onError");
+      });
+      bgAudioManager = uni.getBackgroundAudioManager();
+      bgAudioManager.onEnded((res2) => {
+        if (!this.pausePlay) {
+          this.sleep(this.pauseSeconds);
+          this.randomPlayRecords();
+        }
+      });
+    },
+    methods: {
+      async startRecord() {
+        this.formatedRecordTime = "00:00:00";
+        let status = await this.checkPermission();
+        if (status !== 1) {
+          return;
+        }
+        recorderManager.start({
+          format: "mp3"
+        });
+      },
+      inputDialogToggle() {
+        this.$refs.inputDialog.open();
+      },
+      dialogInputConfirm(val) {
+        this.pauseSeconds = parseInt(val) * 1e3;
+      },
+      getRecordUrl(file) {
+        return "http://47.94.170.153/storage/" + file;
+      },
+      deleteRecord(record2) {
+        formatAppLog("log", "at pages/API/voice/voice.vue:220", "delete record" + record2);
+        uni.request({
+          url: "http://47.94.170.153/" + this.dirName + "/record",
+          method: "DELETE",
+          data: {
+            file_name: record2
+          },
+          header: {
+            "custom-header": "hello"
+          },
+          success: (res2) => {
+            formatAppLog("log", "at pages/API/voice/voice.vue:231", res2.data);
+            this.refreshRecordsList();
+          }
+        });
+      },
+      refreshRecordsList() {
+        uni.request({
+          url: "http://47.94.170.153/" + this.dirName + "/records",
+          data: {
+            text: "uni.request"
+          },
+          header: {
+            "custom-header": "hello"
+          },
+          success: (res2) => {
+            formatAppLog("log", "at pages/API/voice/voice.vue:246", res2.data);
+            this.records = res2.data;
+          }
+        });
+      },
+      pausePlayRecords() {
+        this.pausePlay = true;
+      },
+      continuePlayRecords() {
+        this.pausePlay = false;
+        this.randomPlayRecords();
+      },
+      restartPlayRecords() {
+        this.refreshRecordsList();
+        this.randomPlayRecords();
+      },
+      sleep(delay) {
+        var start = new Date().getTime();
+        while (new Date().getTime() - start < delay) {
+          continue;
+        }
+      },
+      randomPlayRecords() {
+        var recordSrc = this.records.pop();
+        bgAudioManager.src = "http://47.94.170.153/storage/" + recordSrc;
+        formatAppLog("log", "at pages/API/voice/voice.vue:271", bgAudioManager.src);
+        bgAudioManager.play();
+      },
+      stopRecord() {
+        recorderManager.stop();
+        clearInterval(recordTimeInterval);
+      },
+      playVoice() {
+        formatAppLog("log", "at pages/API/voice/voice.vue:279", "play voice");
+        this.playing = true;
+        playTimeInterval = setInterval(() => {
+          this.playTime += 1;
+          this.formatedPlayTime = formatTime(this.playTime);
+        }, 1e3);
+        music.play();
+      },
+      stopVoice() {
+        clearInterval(playTimeInterval);
+        this.playing = false;
+        this.formatedPlayTime = formatTime(0);
+        this.playTime = 0;
+        music.stop();
+      },
+      end() {
+        music.stop();
+        recorderManager.stop();
+        clearInterval(recordTimeInterval);
+        clearInterval(playTimeInterval);
+        this.recording = false, this.playing = false, this.hasRecord = false;
+        this.playTime = 0, this.recordTime = 0;
+        this.formatedRecordTime = "00:00:00", this.formatedRecordTime = "00:00:00";
+      },
+      clear() {
+        this.end();
+      },
+      async checkPermission() {
+        let status = permission.isIOS ? await permission.requestIOS("record") : await permission.requestAndroid("android.permission.RECORD_AUDIO");
+        if (status === null || status === 1) {
+          status = 1;
+        } else if (status === 2) {
+          uni.showModal({
+            content: "\u7CFB\u7EDF\u9EA6\u514B\u98CE\u5DF2\u5173\u95ED",
+            confirmText: "\u786E\u5B9A",
+            showCancel: false,
+            success: function(res2) {
+            }
+          });
+        } else {
+          uni.showModal({
+            content: "\u9700\u8981\u9EA6\u514B\u98CE\u6743\u9650",
+            confirmText: "\u8BBE\u7F6E",
+            success: function(res2) {
+              if (res2.confirm) {
+                permission.gotoAppSetting();
+              }
+            }
+          });
+        }
+        return status;
+      }
+    }
+  };
+  function _sfc_render$1U(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
+    const _component_uni_popup_dialog = resolveEasycom(vue.resolveDynamicComponent("uni-popup-dialog"), __easycom_4$2);
+    const _component_uni_popup = resolveEasycom(vue.resolveDynamicComponent("uni-popup"), __easycom_2$9);
+    return vue.openBlock(), vue.createElementBlock("view", null, [
+      vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
+      vue.createElementVNode("view", null, [
+        vue.createElementVNode("view", { class: "page-body" }, [
+          (vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList($data.records, (record2, index) => {
+            return vue.openBlock(), vue.createElementBlock("view", {
+              class: "page-section page-section-gap",
+              style: { "text-align": "center" }
+            }, [
+              (vue.openBlock(), vue.createElementBlock("audio", {
+                key: index,
+                id: record2 + index,
+                src: $options.getRecordUrl(record2),
+                style: { "text-align": "left" },
+                action: $data.audioAction,
+                controls: ""
+              }, null, 8, ["id", "src", "action"])),
+              vue.createElementVNode("button", {
+                class: "mini-btn",
+                type: "primary",
+                size: "mini",
+                onClick: ($event) => $options.deleteRecord(record2)
+              }, "\u5220\u9664", 8, ["onClick"])
+            ]);
+          }), 256)),
+          vue.createElementVNode("view", null, [
+            vue.createElementVNode("button", {
+              type: "primary",
+              onClick: _cache[0] || (_cache[0] = (...args) => $options.inputDialogToggle && $options.inputDialogToggle(...args))
+            }, " \u8BBE\u7F6E\u64AD\u653E\u95F4\u9694\u65F6\u95F4 "),
+            vue.createCommentVNode(" \u8F93\u5165\u6846\u793A\u4F8B "),
+            vue.createVNode(_component_uni_popup, {
+              ref: "inputDialog",
+              type: "dialog"
+            }, {
+              default: vue.withCtx(() => [
+                vue.createVNode(_component_uni_popup_dialog, {
+                  ref: "inputClose",
+                  mode: "input",
+                  title: "\u8BBE\u7F6E\u64AD\u653E\u95F4\u9694\u65F6\u95F4",
+                  placeholder: "\u8F93\u5165\u4E00\u4E2A\u79D2\u6570",
+                  onConfirm: $options.dialogInputConfirm
+                }, null, 8, ["onConfirm"])
+              ]),
+              _: 1
+            }, 512)
+          ]),
+          vue.createElementVNode("view", { class: "uni-padding-wrap uni-common-mt" }, [
+            vue.createElementVNode("button", {
+              type: "primary",
+              onClick: _cache[1] || (_cache[1] = (...args) => $options.randomPlayRecords && $options.randomPlayRecords(...args))
+            }, "\u968F\u673A\u64AD\u653E")
+          ]),
+          vue.createElementVNode("view", { class: "uni-padding-wrap uni-common-mt" }, [
+            vue.createElementVNode("button", {
+              type: "primary",
+              onClick: _cache[2] || (_cache[2] = (...args) => $options.pausePlayRecords && $options.pausePlayRecords(...args))
+            }, "\u6682\u505C\u64AD\u653E")
+          ]),
+          vue.createElementVNode("view", { class: "uni-padding-wrap uni-common-mt" }, [
+            vue.createElementVNode("button", {
+              type: "primary",
+              onClick: _cache[3] || (_cache[3] = (...args) => $options.continuePlayRecords && $options.continuePlayRecords(...args))
+            }, "\u6062\u590D\u64AD\u653E")
+          ]),
+          vue.createElementVNode("view", { class: "uni-padding-wrap uni-common-mt" }, [
+            vue.createElementVNode("button", {
+              type: "primary",
+              onClick: _cache[4] || (_cache[4] = (...args) => $options.restartPlayRecords && $options.restartPlayRecords(...args))
+            }, "\u91CD\u65B0\u64AD\u653E")
+          ])
+        ])
+      ]),
+      vue.createElementVNode("view", { class: "uni-padding-wrap" }, [
+        !$data.recording && !$data.playing && !$data.hasRecord ? (vue.openBlock(), vue.createElementBlock(vue.Fragment, { key: 0 }, [
+          vue.createElementVNode("view", { class: "page-body-time" }, [
+            vue.createElementVNode("text", { class: "time-big" }, vue.toDisplayString($data.formatedRecordTime), 1)
+          ]),
+          vue.createElementVNode("view", { class: "page-body-buttons" }, [
+            vue.createElementVNode("view", { class: "page-body-button" }),
+            vue.createElementVNode("view", {
+              class: "page-body-button",
+              onClick: _cache[5] || (_cache[5] = (...args) => $options.startRecord && $options.startRecord(...args))
+            }, [
+              vue.createElementVNode("image", { src: "/static/record.png" })
+            ]),
+            vue.createElementVNode("view", { class: "page-body-button" })
+          ])
+        ], 64)) : vue.createCommentVNode("v-if", true),
+        $data.recording === true ? (vue.openBlock(), vue.createElementBlock(vue.Fragment, { key: 1 }, [
+          vue.createElementVNode("view", { class: "page-body-time" }, [
+            vue.createElementVNode("text", { class: "time-big" }, vue.toDisplayString($data.formatedRecordTime), 1)
+          ]),
+          vue.createElementVNode("view", { class: "page-body-buttons" }, [
+            vue.createElementVNode("view", { class: "page-body-button" }),
+            vue.createElementVNode("view", {
+              class: "page-body-button",
+              onClick: _cache[6] || (_cache[6] = (...args) => $options.stopRecord && $options.stopRecord(...args))
+            }, [
+              vue.createElementVNode("view", { class: "button-stop-record" })
+            ]),
+            vue.createElementVNode("view", { class: "page-body-button" })
+          ])
+        ], 64)) : vue.createCommentVNode("v-if", true),
+        $data.hasRecord === true && $data.playing === false ? (vue.openBlock(), vue.createElementBlock(vue.Fragment, { key: 2 }, [
+          vue.createElementVNode("view", { class: "page-body-time" }, [
+            vue.createElementVNode("text", { class: "time-big" }, vue.toDisplayString($data.formatedPlayTime), 1),
+            vue.createElementVNode("text", { class: "time-small" }, vue.toDisplayString($data.formatedRecordTime), 1)
+          ]),
+          vue.createElementVNode("view", { class: "page-body-buttons" }, [
+            vue.createElementVNode("view", {
+              class: "page-body-button",
+              onClick: _cache[7] || (_cache[7] = (...args) => $options.playVoice && $options.playVoice(...args))
+            }, [
+              vue.createElementVNode("image", { src: "/static/play.png" })
+            ]),
+            vue.createElementVNode("view", {
+              class: "page-body-button",
+              onClick: _cache[8] || (_cache[8] = (...args) => $options.clear && $options.clear(...args))
+            }, [
+              vue.createElementVNode("image", { src: "/static/trash.png" })
+            ])
+          ])
+        ], 64)) : vue.createCommentVNode("v-if", true),
+        $data.hasRecord === true && $data.playing === true ? (vue.openBlock(), vue.createElementBlock(vue.Fragment, { key: 3 }, [
+          vue.createElementVNode("view", { class: "page-body-time" }, [
+            vue.createElementVNode("text", { class: "time-big" }, vue.toDisplayString($data.formatedPlayTime), 1),
+            vue.createElementVNode("text", { class: "time-small" }, vue.toDisplayString($data.formatedRecordTime), 1)
+          ]),
+          vue.createElementVNode("view", { class: "page-body-buttons" }, [
+            vue.createElementVNode("view", {
+              class: "page-body-button",
+              onClick: _cache[9] || (_cache[9] = (...args) => $options.stopVoice && $options.stopVoice(...args))
+            }, [
+              vue.createElementVNode("image", { src: "/static/stop.png" })
+            ]),
+            vue.createElementVNode("view", {
+              class: "page-body-button",
+              onClick: _cache[10] || (_cache[10] = (...args) => $options.clear && $options.clear(...args))
+            }, [
+              vue.createElementVNode("image", { src: "/static/trash.png" })
+            ])
+          ])
+        ], 64)) : vue.createCommentVNode("v-if", true)
+      ])
+    ]);
+  }
+  var PagesAPIVoiceVoice = /* @__PURE__ */ _export_sfc(_sfc_main$1V, [["render", _sfc_render$1U], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/voice/voice.vue"]]);
+  const audioUrl = "https://vkceyugu.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3";
+  const _sfc_main$1U = {
+    data() {
+      return {
+        title: "innerAudioContext",
+        isPlaying: false,
+        isPlayEnd: false,
+        currentTime: 0,
+        duration: 100
+      };
+    },
+    computed: {
+      position() {
+        return this.isPlayEnd ? 0 : this.currentTime;
+      },
+      playImage() {
+        return this.isPlaying ? "/static/pause.png" : "/static/play.png";
+      }
+    },
+    onLoad() {
+      this._isChanging = false;
+      this._audioContext = null;
+      this.createAudio();
+    },
+    onUnload() {
+      if (this._audioContext != null && this.isPlaying) {
+        this.stop();
+      }
+    },
+    methods: {
+      createAudio() {
+        var innerAudioContext = this._audioContext = uni.createInnerAudioContext();
+        innerAudioContext.autoplay = false;
+        innerAudioContext.src = audioUrl;
+        innerAudioContext.onPlay(() => {
+          formatAppLog("log", "at pages/API/inner-audio/inner-audio.vue:52", "\u5F00\u59CB\u64AD\u653E");
+        });
+        innerAudioContext.onTimeUpdate((e) => {
+          if (this._isChanging === true) {
+            return;
+          }
+          this.currentTime = innerAudioContext.currentTime || 0;
+          this.duration = innerAudioContext.duration || 0;
+        });
+        innerAudioContext.onEnded(() => {
+          this.currentTime = 0;
+          this.isPlaying = false;
+          this.isPlayEnd = true;
+        });
+        innerAudioContext.onError((res2) => {
+          this.isPlaying = false;
+          formatAppLog("log", "at pages/API/inner-audio/inner-audio.vue:68", res2.errMsg);
+          formatAppLog("log", "at pages/API/inner-audio/inner-audio.vue:69", res2.errCode);
+        });
+        return innerAudioContext;
+      },
+      onchanging() {
+        this._isChanging = true;
+      },
+      onchange(e) {
+        formatAppLog("log", "at pages/API/inner-audio/inner-audio.vue:77", e.detail.value);
+        formatAppLog("log", "at pages/API/inner-audio/inner-audio.vue:78", typeof e.detail.value);
+        this._audioContext.seek(e.detail.value);
+        this._isChanging = false;
+      },
+      play() {
+        if (this.isPlaying) {
+          this.pause();
+          return;
+        }
+        this.isPlaying = true;
+        this._audioContext.play();
+        this.isPlayEnd = false;
+      },
+      pause() {
+        this._audioContext.pause();
+        this.isPlaying = false;
+      },
+      stop() {
+        this._audioContext.stop();
+        this.isPlaying = false;
+      }
+    }
+  };
+  function _sfc_render$1T(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
+    return vue.openBlock(), vue.createElementBlock("view", { class: "uni-padding-wrap" }, [
+      vue.createVNode(_component_page_head, { title: "audio" }),
+      vue.createElementVNode("view", { class: "uni-common-mt" }, [
+        vue.createElementVNode("slider", {
+          value: $options.position,
+          min: 0,
+          max: $data.duration,
+          onChanging: _cache[0] || (_cache[0] = (...args) => $options.onchanging && $options.onchanging(...args)),
+          onChange: _cache[1] || (_cache[1] = (...args) => $options.onchange && $options.onchange(...args))
+        }, null, 40, ["value", "max"])
+      ]),
+      vue.createCommentVNode(' <view class="uni-common-mt play-time-area">\n			<text class="current-time">{{currentTime}}</text>\n			<text class="duration">{{duration}}</text>\n		</view> '),
+      vue.createElementVNode("view", { class: "play-button-area" }, [
+        vue.createElementVNode("image", {
+          class: "icon-play",
+          src: $options.playImage,
+          onClick: _cache[2] || (_cache[2] = (...args) => $options.play && $options.play(...args))
+        }, null, 8, ["src"])
+      ])
+    ]);
+  }
+  var PagesAPIInnerAudioInnerAudio = /* @__PURE__ */ _export_sfc(_sfc_main$1U, [["render", _sfc_render$1T], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/inner-audio/inner-audio.vue"]]);
+  const _sfc_main$1T = {
+    data() {
+      return {
+        title: "backgroundAudio",
+        bgAudioMannager: null,
+        dataUrl: "https://vkceyugu.cdn.bspapp.com/VKCEYUGU-hello-uniapp/2cc220e0-c27a-11ea-9dfb-6da8e309e0d8.mp3",
+        playing: false,
+        playTime: 0,
+        formatedPlayTime: "00:00:00"
+      };
+    },
+    onLoad: function() {
+      this.playing = this.$backgroundAudioData.playing;
+      this.playTime = this.$backgroundAudioData.playTime;
+      this.formatedPlayTime = this.$backgroundAudioData.formatedPlayTime;
+      let bgAudioMannager = uni.getBackgroundAudioManager();
+      if (!bgAudioMannager.title) {
+        bgAudioMannager.title = "\u81F4\u7231\u4E3D\u4E1D";
+      }
+      if (!bgAudioMannager.singer) {
+        bgAudioMannager.singer = "\u6682\u65E0";
+      }
+      if (!bgAudioMannager.coverImgUrl) {
+        bgAudioMannager.coverImgUrl = "https://vkceyugu.cdn.bspapp.com/VKCEYUGU-dc-site/c517b410-5184-11eb-b997-9918a5dda011.jpeg";
+      }
+      bgAudioMannager.onPlay(() => {
+        formatAppLog("log", "at pages/API/background-audio/background-audio.vue:68", "\u5F00\u59CB\u64AD\u653E");
+        this.$backgroundAudioData.playing = this.playing = true;
+      });
+      bgAudioMannager.onPause(() => {
+        formatAppLog("log", "at pages/API/background-audio/background-audio.vue:72", "\u6682\u505C\u64AD\u653E");
+        this.$backgroundAudioData.playing = this.playing = false;
+      });
+      bgAudioMannager.onEnded(() => {
+        this.playing = false;
+        this.$backgroundAudioData.playing = false;
+        this.$backgroundAudioData.playTime = this.playTime = 0;
+        this.$backgroundAudioData.formatedPlayTime = this.formatedPlayTime = formatTime(0);
+      });
+      bgAudioMannager.onTimeUpdate((e) => {
+        if (Math.floor(bgAudioMannager.currentTime) > Math.floor(this.playTime)) {
+          this.$backgroundAudioData.formatedPlayTime = this.formatedPlayTime = formatTime(Math.floor(bgAudioMannager.currentTime));
+        }
+        this.$backgroundAudioData.playTime = this.playTime = bgAudioMannager.currentTime;
+      });
+      this.bgAudioMannager = bgAudioMannager;
+    },
+    methods: {
+      play: function(res2) {
+        if (!this.bgAudioMannager.src) {
+          this.bgAudioMannager.startTime = this.playTime;
+          this.bgAudioMannager.src = this.dataUrl;
+        } else {
+          this.bgAudioMannager.seek(this.playTime);
+          this.bgAudioMannager.play();
+        }
+      },
+      seek: function(e) {
+        this.bgAudioMannager.seek(e.detail.value);
+      },
+      pause: function() {
+        this.bgAudioMannager.pause();
+      },
+      stop: function() {
+        this.bgAudioMannager.stop();
+        this.$backgroundAudioData.playing = this.playing = false;
+        this.$backgroundAudioData.playTime = this.playTime = 0;
+        this.$backgroundAudioData.formatedPlayTime = this.formatedPlayTime = formatTime(0);
+      }
+    }
+  };
+  function _sfc_render$1S(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
+    return vue.openBlock(), vue.createElementBlock("view", null, [
+      vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
+      vue.createElementVNode("view", { class: "uni-padding-wrap" }, [
+        vue.createElementVNode("view", { class: "uni-center" }, [
+          vue.createElementVNode("text", { class: "time-big" }, vue.toDisplayString($data.formatedPlayTime), 1)
+        ]),
+        vue.createElementVNode("view", { class: "uni-common-mt" }, [
+          vue.createElementVNode("slider", {
+            class: "slider",
+            min: "0",
+            max: "21",
+            step: "1",
+            value: $data.playTime,
+            onChange: _cache[0] || (_cache[0] = (...args) => $options.seek && $options.seek(...args))
+          }, null, 40, ["value"])
+        ]),
+        vue.createElementVNode("view", { class: "play-time" }, [
+          vue.createElementVNode("text", null, "00:00"),
+          vue.createElementVNode("text", null, "00:21")
+        ]),
+        vue.createElementVNode("view", { class: "uni-hello-text" }, "\u6CE8\u610F\uFF1A\u79BB\u5F00\u5F53\u524D\u9875\u9762\u540E\u80CC\u666F\u97F3\u4E50\u5C06\u4FDD\u6301\u64AD\u653E\uFF0C\u4F46\u9000\u51FAuni-app\u5C06\u505C\u6B62"),
+        vue.createElementVNode("view", { class: "page-body-buttons" }, [
+          $data.playing ? (vue.openBlock(), vue.createElementBlock(vue.Fragment, { key: 0 }, [
+            vue.createElementVNode("view", {
+              class: "page-body-button",
+              onClick: _cache[1] || (_cache[1] = (...args) => $options.stop && $options.stop(...args))
+            }, [
+              vue.createElementVNode("image", { src: "/static/stop.png" })
+            ]),
+            vue.createElementVNode("view", {
+              class: "page-body-button",
+              onClick: _cache[2] || (_cache[2] = (...args) => $options.pause && $options.pause(...args))
+            }, [
+              vue.createElementVNode("image", { src: "/static/pause.png" })
+            ])
+          ], 64)) : vue.createCommentVNode("v-if", true),
+          !$data.playing ? (vue.openBlock(), vue.createElementBlock(vue.Fragment, { key: 1 }, [
+            vue.createElementVNode("view", { class: "page-body-button" }),
+            vue.createElementVNode("view", {
+              class: "page-body-button",
+              onClick: _cache[3] || (_cache[3] = (...args) => $options.play && $options.play(...args))
+            }, [
+              vue.createElementVNode("image", { src: "/static/play.png" })
+            ])
+          ], 64)) : vue.createCommentVNode("v-if", true),
+          vue.createElementVNode("view", { class: "page-body-button" })
+        ])
+      ])
+    ]);
+  }
+  var PagesAPIBackgroundAudioBackgroundAudio = /* @__PURE__ */ _export_sfc(_sfc_main$1T, [["render", _sfc_render$1S], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/background-audio/background-audio.vue"]]);
+  var sourceType = [
+    ["camera"],
+    ["album"],
+    ["camera", "album"]
+  ];
+  const _sfc_main$1S = {
+    data() {
+      return {
+        title: "chooseVideo",
+        sourceTypeIndex: 2,
+        sourceType: ["\u62CD\u6444", "\u76F8\u518C", "\u62CD\u6444\u6216\u76F8\u518C"],
+        src: "",
+        cameraList: [
+          {
+            value: "back",
+            name: "\u540E\u7F6E\u6444\u50CF\u5934",
+            checked: "true"
+          },
+          {
+            value: "front",
+            name: "\u524D\u7F6E\u6444\u50CF\u5934"
+          }
+        ],
+        cameraIndex: 0
+      };
+    },
+    onUnload() {
+      this.src = "", this.sourceTypeIndex = 2, this.sourceType = ["\u62CD\u6444", "\u76F8\u518C", "\u62CD\u6444\u6216\u76F8\u518C"];
+    },
+    methods: {
+      radioChange(evt) {
+        for (let i2 = 0; i2 < this.cameraList.length; i2++) {
+          if (this.cameraList[i2].value === evt.detail.value) {
+            this.cameraIndex = i2;
+            break;
+          }
+        }
+      },
+      sourceTypeChange: function(e) {
+        this.sourceTypeIndex = parseInt(e.detail.value);
+      },
+      chooseVideo: function() {
+        uni.chooseVideo({
+          camera: this.cameraList[this.cameraIndex].value,
+          sourceType: sourceType[this.sourceTypeIndex],
+          success: (res2) => {
+            this.src = res2.tempFilePath;
+          },
+          fail: (err) => {
+          }
+        });
+      }
+    }
+  };
+  function _sfc_render$1R(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
+    return vue.openBlock(), vue.createElementBlock("view", null, [
+      vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
+      vue.createElementVNode("view", { class: "uni-common-mt" }, [
+        vue.createElementVNode("view", { class: "uni-list" }, [
+          vue.createElementVNode("view", { class: "uni-list-cell" }, [
+            vue.createElementVNode("view", { class: "uni-list-cell-left" }, [
+              vue.createElementVNode("view", { class: "uni-label" }, "\u89C6\u9891\u6765\u6E90")
+            ]),
+            vue.createElementVNode("view", { class: "uni-list-cell-right" }, [
+              vue.createElementVNode("picker", {
+                range: $data.sourceType,
+                onChange: _cache[0] || (_cache[0] = (...args) => $options.sourceTypeChange && $options.sourceTypeChange(...args)),
+                value: $data.sourceTypeIndex
+              }, [
+                vue.createElementVNode("view", { class: "uni-input" }, vue.toDisplayString($data.sourceType[$data.sourceTypeIndex]), 1)
+              ], 40, ["range", "value"])
+            ])
+          ])
+        ])
+      ]),
+      vue.createElementVNode("view", { class: "uni-title uni-common-mt uni-common-pl" }, "\u6444\u50CF\u5934\u4F4D\u7F6E"),
+      vue.createElementVNode("view", { class: "uni-hello-text camera-tips" }, "\u6CE8\u610F\uFF1A\u90E8\u5206 Android \u624B\u673A\u4E0B\u7531\u4E8E\u7CFB\u7EDF ROM \u4E0D\u652F\u6301\u65E0\u6CD5\u751F\u6548\uFF0C\u6253\u5F00\u62CD\u6444\u754C\u9762\u540E\u53EF\u64CD\u4F5C\u5207\u6362"),
+      vue.createElementVNode("view", { class: "uni-list" }, [
+        vue.createElementVNode("radio-group", {
+          onChange: _cache[1] || (_cache[1] = (...args) => $options.radioChange && $options.radioChange(...args))
+        }, [
+          (vue.openBlock(true), vue.createElementBlock(vue.Fragment, null, vue.renderList($data.cameraList, (item, index) => {
+            return vue.openBlock(), vue.createElementBlock("label", {
+              class: "uni-list-cell uni-list-cell-pd",
+              key: item.value
+            }, [
+              vue.createElementVNode("radio", {
+                value: item.value,
+                checked: index === $data.cameraIndex
+              }, vue.toDisplayString(item.name), 9, ["value", "checked"])
+            ]);
+          }), 128))
+        ], 32)
+      ]),
+      !$data.src ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 0,
+        class: "uni-hello-addfile",
+        onClick: _cache[2] || (_cache[2] = (...args) => $options.chooseVideo && $options.chooseVideo(...args))
+      }, "+ \u6DFB\u52A0\u89C6\u9891")) : (vue.openBlock(), vue.createElementBlock("video", {
+        key: 1,
+        src: $data.src,
+        class: "video"
+      }, null, 8, ["src"]))
+    ]);
+  }
+  var PagesAPIVideoVideo = /* @__PURE__ */ _export_sfc(_sfc_main$1S, [["render", _sfc_render$1R], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/video/video.vue"]]);
   const _sfc_main$1R = {
+    data() {
+      return {
+        title: "saveFile",
+        tempFilePath: "",
+        savedFilePath: ""
+      };
+    },
+    onLoad() {
+      this.savedFilePath = uni.getStorageSync("savedFilePath");
+    },
+    methods: {
+      chooseImage() {
+        uni.chooseImage({
+          count: 1,
+          success: (res2) => {
+            this.tempFilePath = res2.tempFilePaths[0];
+          },
+          fail: (err) => {
+          }
+        });
+      },
+      saveFile() {
+        if (this.tempFilePath.length > 0) {
+          uni.saveFile({
+            tempFilePath: this.tempFilePath,
+            success: (res2) => {
+              this.savedFilePath = res2.savedFilePath;
+              uni.setStorageSync("savedFilePath", res2.savedFilePath);
+              uni.showModal({
+                title: "\u4FDD\u5B58\u6210\u529F",
+                content: "\u4E0B\u6B21\u8FDB\u5165\u9875\u9762\u65F6\uFF0C\u6B64\u6587\u4EF6\u4ECD\u53EF\u7528",
+                showCancel: false
+              });
+            },
+            fail: (res2) => {
+              uni.showModal({
+                title: "\u4FDD\u5B58\u5931\u8D25",
+                content: "\u5931\u8D25\u539F\u56E0: " + JSON.stringify(res2),
+                showCancel: false
+              });
+            }
+          });
+        } else {
+          uni.showModal({
+            content: "\u8BF7\u9009\u62E9\u6587\u4EF6",
+            showCancel: false
+          });
+        }
+      },
+      clear() {
+        uni.setStorageSync("savedFilePath", "");
+        this.tempFilePath = "";
+        this.savedFilePath = "";
+      },
+      openDocument() {
+        uni.downloadFile({
+          url: "https://vkceyugu.cdn.bspapp.com/VKCEYUGU-dc-site/b3f1d0b0-5168-11eb-bd01-97bc1429a9ff.pdf",
+          success: (res2) => {
+            uni.openDocument({
+              filePath: res2.tempFilePath,
+              success: () => {
+                formatAppLog("log", "at pages/API/file/file.vue:108", "\u6253\u5F00\u6587\u6863\u6210\u529F");
+              }
+            });
+          }
+        });
+      }
+    }
+  };
+  function _sfc_render$1Q(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
+    return vue.openBlock(), vue.createElementBlock("view", null, [
+      vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
+      vue.createElementVNode("view", { class: "uni-padding-wrap uni-common-mt" }, [
+        $data.tempFilePath ? (vue.openBlock(), vue.createElementBlock("image", {
+          key: 0,
+          src: $data.tempFilePath,
+          class: "image",
+          mode: "aspectFit"
+        }, null, 8, ["src"])) : vue.createCommentVNode("v-if", true),
+        !$data.tempFilePath && $data.savedFilePath ? (vue.openBlock(), vue.createElementBlock("image", {
+          key: 1,
+          src: $data.savedFilePath,
+          class: "image",
+          mode: "aspectFit"
+        }, null, 8, ["src"])) : vue.createCommentVNode("v-if", true),
+        !$data.tempFilePath && !$data.savedFilePath ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 2,
+          class: "uni-hello-addfile",
+          onClick: _cache[0] || (_cache[0] = (...args) => $options.chooseImage && $options.chooseImage(...args))
+        }, "+ \u8BF7\u9009\u62E9\u6587\u4EF6")) : vue.createCommentVNode("v-if", true),
+        vue.createElementVNode("view", { class: "uni-btn-v" }, [
+          vue.createElementVNode("button", {
+            class: "btn-savefile",
+            onClick: _cache[1] || (_cache[1] = (...args) => $options.saveFile && $options.saveFile(...args))
+          }, "\u4FDD\u5B58\u6587\u4EF6"),
+          vue.createElementVNode("button", {
+            onClick: _cache[2] || (_cache[2] = (...args) => $options.clear && $options.clear(...args))
+          }, "\u5220\u9664\u6587\u4EF6")
+        ]),
+        vue.createElementVNode("view", { class: "btn-area" }, [
+          vue.createElementVNode("button", {
+            onClick: _cache[3] || (_cache[3] = (...args) => $options.openDocument && $options.openDocument(...args))
+          }, "\u6253\u5F00pdf\u6587\u4EF6")
+        ])
+      ])
+    ]);
+  }
+  var PagesAPIFileFile = /* @__PURE__ */ _export_sfc(_sfc_main$1R, [["render", _sfc_render$1Q], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/file/file.vue"]]);
+  var formatLocation$1 = formatLocation$2;
+  const _sfc_main$1Q = {
     data() {
       return {
         title: "getLocation",
@@ -11195,7 +11738,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1Q(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1P(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
     const _component_uni_popup = resolveEasycom(vue.resolveDynamicComponent("uni-popup"), __easycom_2$9);
     return vue.openBlock(), vue.createElementBlock("view", null, [
@@ -11251,8 +11794,8 @@ if (uni.restoreGlobal) {
       }, 8, ["show"])
     ]);
   }
-  var PagesAPIGetLocationGetLocation = /* @__PURE__ */ _export_sfc(_sfc_main$1R, [["render", _sfc_render$1Q], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/get-location/get-location.vue"]]);
-  const _sfc_main$1Q = {
+  var PagesAPIGetLocationGetLocation = /* @__PURE__ */ _export_sfc(_sfc_main$1Q, [["render", _sfc_render$1P], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/get-location/get-location.vue"]]);
+  const _sfc_main$1P = {
     data() {
       return {
         title: "openLocation"
@@ -11271,7 +11814,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1P(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1O(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
     return vue.openBlock(), vue.createElementBlock("view", null, [
       vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
@@ -11349,9 +11892,9 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  var PagesAPIOpenLocationOpenLocation = /* @__PURE__ */ _export_sfc(_sfc_main$1Q, [["render", _sfc_render$1P], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/open-location/open-location.vue"]]);
+  var PagesAPIOpenLocationOpenLocation = /* @__PURE__ */ _export_sfc(_sfc_main$1P, [["render", _sfc_render$1O], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/open-location/open-location.vue"]]);
   var formatLocation = formatLocation$2;
-  const _sfc_main$1P = {
+  const _sfc_main$1O = {
     data() {
       return {
         title: "chooseLocation",
@@ -11373,7 +11916,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1O(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1N(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
     return vue.openBlock(), vue.createElementBlock("view", null, [
       vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
@@ -11407,8 +11950,8 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  var PagesAPIChooseLocationChooseLocation = /* @__PURE__ */ _export_sfc(_sfc_main$1P, [["render", _sfc_render$1O], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/choose-location/choose-location.vue"]]);
-  const _sfc_main$1O = {
+  var PagesAPIChooseLocationChooseLocation = /* @__PURE__ */ _export_sfc(_sfc_main$1O, [["render", _sfc_render$1N], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/choose-location/choose-location.vue"]]);
+  const _sfc_main$1N = {
     data() {
       return {
         title: "get/set/clearStorage",
@@ -11492,7 +12035,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1N(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1M(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
     return vue.openBlock(), vue.createElementBlock("view", null, [
       vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
@@ -11547,8 +12090,8 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  var PagesAPIStorageStorage = /* @__PURE__ */ _export_sfc(_sfc_main$1O, [["render", _sfc_render$1N], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/storage/storage.vue"]]);
-  const _sfc_main$1N = {
+  var PagesAPIStorageStorage = /* @__PURE__ */ _export_sfc(_sfc_main$1N, [["render", _sfc_render$1M], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/storage/storage.vue"]]);
+  const _sfc_main$1M = {
     data() {
       return {
         title: "SQLite"
@@ -11635,7 +12178,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1M(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1L(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
     return vue.openBlock(), vue.createElementBlock("view", null, [
       vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
@@ -11679,9 +12222,9 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  var PagesAPISqliteSqlite = /* @__PURE__ */ _export_sfc(_sfc_main$1N, [["render", _sfc_render$1M], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/sqlite/sqlite.vue"]]);
+  var PagesAPISqliteSqlite = /* @__PURE__ */ _export_sfc(_sfc_main$1M, [["render", _sfc_render$1L], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/sqlite/sqlite.vue"]]);
   const ERROR_CODE = [-5001, -5002, -5003, -5004, -5005, -5006];
-  const _sfc_main$1M = {
+  const _sfc_main$1L = {
     data() {
       return {
         title: "\u6FC0\u52B1\u89C6\u9891\u5E7F\u544A",
@@ -11746,7 +12289,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1L(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1K(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
     return vue.openBlock(), vue.createElementBlock("view", null, [
       vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
@@ -11770,8 +12313,8 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  var PagesAPIRewardedVideoAdRewardedVideoAd = /* @__PURE__ */ _export_sfc(_sfc_main$1M, [["render", _sfc_render$1L], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/rewarded-video-ad/rewarded-video-ad.vue"]]);
-  const _sfc_main$1L = {
+  var PagesAPIRewardedVideoAdRewardedVideoAd = /* @__PURE__ */ _export_sfc(_sfc_main$1L, [["render", _sfc_render$1K], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/rewarded-video-ad/rewarded-video-ad.vue"]]);
+  const _sfc_main$1K = {
     data() {
       return {
         title: "\u5168\u5C4F\u89C6\u9891\u5E7F\u544A",
@@ -11826,7 +12369,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1K(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1J(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
     return vue.openBlock(), vue.createElementBlock("view", null, [
       vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
@@ -11841,8 +12384,8 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  var PagesAPIFullScreenVideoAdFullScreenVideoAd = /* @__PURE__ */ _export_sfc(_sfc_main$1L, [["render", _sfc_render$1K], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/full-screen-video-ad/full-screen-video-ad.vue"]]);
-  const _sfc_main$1K = {
+  var PagesAPIFullScreenVideoAdFullScreenVideoAd = /* @__PURE__ */ _export_sfc(_sfc_main$1K, [["render", _sfc_render$1J], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/full-screen-video-ad/full-screen-video-ad.vue"]]);
+  const _sfc_main$1J = {
     data() {
       return {
         title: "brightness",
@@ -11884,7 +12427,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1J(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1I(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
     return vue.openBlock(), vue.createElementBlock("view", null, [
       vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
@@ -11905,8 +12448,8 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  var PagesAPIBrightnessBrightness = /* @__PURE__ */ _export_sfc(_sfc_main$1K, [["render", _sfc_render$1J], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/brightness/brightness.vue"]]);
-  const _sfc_main$1J = {
+  var PagesAPIBrightnessBrightness = /* @__PURE__ */ _export_sfc(_sfc_main$1J, [["render", _sfc_render$1I], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/brightness/brightness.vue"]]);
+  const _sfc_main$1I = {
     data() {
       return {
         title: "saveImage/saveVideo",
@@ -11978,7 +12521,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1I(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1H(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
     return vue.openBlock(), vue.createElementBlock("view", null, [
       vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
@@ -12019,8 +12562,8 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  var PagesAPISaveMediaSaveMedia = /* @__PURE__ */ _export_sfc(_sfc_main$1J, [["render", _sfc_render$1I], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/save-media/save-media.vue"]]);
-  const _sfc_main$1I = {
+  var PagesAPISaveMediaSaveMedia = /* @__PURE__ */ _export_sfc(_sfc_main$1I, [["render", _sfc_render$1H], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/save-media/save-media.vue"]]);
+  const _sfc_main$1H = {
     data() {
       return {
         title: "bluetooth",
@@ -12441,7 +12984,7 @@ if (uni.restoreGlobal) {
       showCancel
     });
   }
-  function _sfc_render$1H(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1G(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
     return vue.openBlock(), vue.createElementBlock("view", null, [
       vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
@@ -12566,8 +13109,8 @@ if (uni.restoreGlobal) {
       ], 32)) : vue.createCommentVNode("v-if", true)
     ]);
   }
-  var PagesAPIBluetoothBluetooth = /* @__PURE__ */ _export_sfc(_sfc_main$1I, [["render", _sfc_render$1H], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/bluetooth/bluetooth.vue"]]);
-  const _sfc_main$1H = {
+  var PagesAPIBluetoothBluetooth = /* @__PURE__ */ _export_sfc(_sfc_main$1H, [["render", _sfc_render$1G], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/bluetooth/bluetooth.vue"]]);
+  const _sfc_main$1G = {
     data() {
       return {
         title: "\u751F\u7269\u8BA4\u8BC1",
@@ -12687,7 +13230,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1G(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1F(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
     return vue.openBlock(), vue.createElementBlock("view", null, [
       vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
@@ -12718,9 +13261,9 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  var PagesAPISoterSoter = /* @__PURE__ */ _export_sfc(_sfc_main$1H, [["render", _sfc_render$1G], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/soter/soter.vue"]]);
+  var PagesAPISoterSoter = /* @__PURE__ */ _export_sfc(_sfc_main$1G, [["render", _sfc_render$1F], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/soter/soter.vue"]]);
   const DEVICE_UUID_WEICHAT = "FDA50693-A4E2-4FB1-AFCF-C6EB07647825";
-  const _sfc_main$1G = {
+  const _sfc_main$1F = {
     data() {
       return {
         title: "iBeacon",
@@ -12877,7 +13420,7 @@ if (uni.restoreGlobal) {
       showCancel
     });
   }
-  function _sfc_render$1F(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1E(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
     return vue.openBlock(), vue.createElementBlock("view", null, [
       vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
@@ -12929,8 +13472,8 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  var PagesAPIIbeaconIbeacon = /* @__PURE__ */ _export_sfc(_sfc_main$1G, [["render", _sfc_render$1F], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/ibeacon/ibeacon.vue"]]);
-  const _sfc_main$1F = {
+  var PagesAPIIbeaconIbeacon = /* @__PURE__ */ _export_sfc(_sfc_main$1F, [["render", _sfc_render$1E], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/ibeacon/ibeacon.vue"]]);
+  const _sfc_main$1E = {
     data() {
       return {
         title: "vibrateLong/vibrateShort"
@@ -12955,7 +13498,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1E(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1D(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
     return vue.openBlock(), vue.createElementBlock("view", null, [
       vue.createVNode(_component_page_head, { title: $data.title }, null, 8, ["title"]),
@@ -12977,9 +13520,9 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  var PagesAPIVibrateVibrate = /* @__PURE__ */ _export_sfc(_sfc_main$1F, [["render", _sfc_render$1E], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/vibrate/vibrate.vue"]]);
+  var PagesAPIVibrateVibrate = /* @__PURE__ */ _export_sfc(_sfc_main$1E, [["render", _sfc_render$1D], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/vibrate/vibrate.vue"]]);
   let platform$3 = uni.getSystemInfoSync().platform;
-  const _sfc_main$1E = {
+  const _sfc_main$1D = {
     data() {
       return {
         connected: false,
@@ -13084,7 +13627,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1D(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1C(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
     return vue.openBlock(), vue.createElementBlock("view", null, [
       vue.createVNode(_component_page_head, { title: "websocket\u901A\u8BAF\u793A\u4F8B" }),
@@ -13110,9 +13653,9 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  var PagesAPIWebsocketSocketTaskWebsocketSocketTask = /* @__PURE__ */ _export_sfc(_sfc_main$1E, [["render", _sfc_render$1D], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/websocket-socketTask/websocket-socketTask.vue"]]);
+  var PagesAPIWebsocketSocketTaskWebsocketSocketTask = /* @__PURE__ */ _export_sfc(_sfc_main$1D, [["render", _sfc_render$1C], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/websocket-socketTask/websocket-socketTask.vue"]]);
   let platform$2 = uni.getSystemInfoSync().platform;
-  const _sfc_main$1D = {
+  const _sfc_main$1C = {
     data() {
       return {
         connected: false,
@@ -13210,7 +13753,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1C(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1B(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_page_head = resolveEasycom(vue.resolveDynamicComponent("page-head"), __easycom_0$6);
     return vue.openBlock(), vue.createElementBlock("view", null, [
       vue.createVNode(_component_page_head, { title: "websocket\u901A\u8BAF\u793A\u4F8B" }),
@@ -13236,8 +13779,8 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  var PagesAPIWebsocketGlobalWebsocketGlobal = /* @__PURE__ */ _export_sfc(_sfc_main$1D, [["render", _sfc_render$1C], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/websocket-global/websocket-global.vue"]]);
-  const _sfc_main$1C = {
+  var PagesAPIWebsocketGlobalWebsocketGlobal = /* @__PURE__ */ _export_sfc(_sfc_main$1C, [["render", _sfc_render$1B], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/API/websocket-global/websocket-global.vue"]]);
+  const _sfc_main$1B = {
     name: "UniCard",
     emits: ["click"],
     props: {
@@ -13296,7 +13839,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1B(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1A(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", {
       class: vue.normalizeClass(["uni-card", { "uni-card--full": $props.isFull, "uni-card--shadow": $props.isShadow, "uni-card--border": $props.border }]),
       style: vue.normalizeStyle({ "margin": $props.isFull ? 0 : $props.margin, "padding": $props.spacing, "box-shadow": $props.isShadow ? $props.shadow : "" })
@@ -13367,7 +13910,7 @@ if (uni.restoreGlobal) {
       ])
     ], 6);
   }
-  var __easycom_0$3 = /* @__PURE__ */ _export_sfc(_sfc_main$1C, [["render", _sfc_render$1B], ["__scopeId", "data-v-19622063"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-card/components/uni-card/uni-card.vue"]]);
+  var __easycom_0$3 = /* @__PURE__ */ _export_sfc(_sfc_main$1B, [["render", _sfc_render$1A], ["__scopeId", "data-v-19622063"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-card/components/uni-card/uni-card.vue"]]);
   function obj2strClass(obj) {
     let classess = "";
     for (let key in obj) {
@@ -13386,7 +13929,7 @@ if (uni.restoreGlobal) {
     }
     return style;
   }
-  const _sfc_main$1B = {
+  const _sfc_main$1A = {
     name: "uni-easyinput",
     emits: ["click", "iconClick", "update:modelValue", "input", "focus", "blur", "confirm", "clear", "eyes", "change"],
     model: {
@@ -13655,7 +14198,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1A(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1z(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_uni_icons = resolveEasycom(vue.resolveDynamicComponent("uni-icons"), __easycom_1$n);
     return vue.openBlock(), vue.createElementBlock("view", {
       class: vue.normalizeClass(["uni-easyinput", { "uni-easyinput-error": $options.msg }]),
@@ -13742,8 +14285,8 @@ if (uni.restoreGlobal) {
       ], 6)
     ], 6);
   }
-  var __easycom_1$l = /* @__PURE__ */ _export_sfc(_sfc_main$1B, [["render", _sfc_render$1A], ["__scopeId", "data-v-abe12412"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-easyinput/components/uni-easyinput/uni-easyinput.vue"]]);
-  const _sfc_main$1A = {
+  var __easycom_1$l = /* @__PURE__ */ _export_sfc(_sfc_main$1A, [["render", _sfc_render$1z], ["__scopeId", "data-v-abe12412"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-easyinput/components/uni-easyinput/uni-easyinput.vue"]]);
+  const _sfc_main$1z = {
     name: "uniFormsItem",
     options: {
       virtualHost: true
@@ -14026,7 +14569,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1z(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1y(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", {
       class: vue.normalizeClass(["uni-forms-item", ["is-direction-" + $data.localLabelPos, $data.border ? "uni-forms-item--border" : "", $data.border && $data.isFirstBorder ? "is-first-border" : ""]])
     }, [
@@ -14052,287 +14595,7 @@ if (uni.restoreGlobal) {
       ])
     ], 2);
   }
-  var __easycom_2$8 = /* @__PURE__ */ _export_sfc(_sfc_main$1A, [["render", _sfc_render$1z], ["__scopeId", "data-v-61dfc0d0"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-forms/components/uni-forms-item/uni-forms-item.vue"]]);
-  const isObject = (val) => val !== null && typeof val === "object";
-  const defaultDelimiters = ["{", "}"];
-  class BaseFormatter {
-    constructor() {
-      this._caches = /* @__PURE__ */ Object.create(null);
-    }
-    interpolate(message, values, delimiters = defaultDelimiters) {
-      if (!values) {
-        return [message];
-      }
-      let tokens = this._caches[message];
-      if (!tokens) {
-        tokens = parse(message, delimiters);
-        this._caches[message] = tokens;
-      }
-      return compile(tokens, values);
-    }
-  }
-  const RE_TOKEN_LIST_VALUE = /^(?:\d)+/;
-  const RE_TOKEN_NAMED_VALUE = /^(?:\w)+/;
-  function parse(format, [startDelimiter, endDelimiter]) {
-    const tokens = [];
-    let position = 0;
-    let text = "";
-    while (position < format.length) {
-      let char = format[position++];
-      if (char === startDelimiter) {
-        if (text) {
-          tokens.push({ type: "text", value: text });
-        }
-        text = "";
-        let sub = "";
-        char = format[position++];
-        while (char !== void 0 && char !== endDelimiter) {
-          sub += char;
-          char = format[position++];
-        }
-        const isClosed = char === endDelimiter;
-        const type = RE_TOKEN_LIST_VALUE.test(sub) ? "list" : isClosed && RE_TOKEN_NAMED_VALUE.test(sub) ? "named" : "unknown";
-        tokens.push({ value: sub, type });
-      } else {
-        text += char;
-      }
-    }
-    text && tokens.push({ type: "text", value: text });
-    return tokens;
-  }
-  function compile(tokens, values) {
-    const compiled = [];
-    let index = 0;
-    const mode = Array.isArray(values) ? "list" : isObject(values) ? "named" : "unknown";
-    if (mode === "unknown") {
-      return compiled;
-    }
-    while (index < tokens.length) {
-      const token = tokens[index];
-      switch (token.type) {
-        case "text":
-          compiled.push(token.value);
-          break;
-        case "list":
-          compiled.push(values[parseInt(token.value, 10)]);
-          break;
-        case "named":
-          if (mode === "named") {
-            compiled.push(values[token.value]);
-          } else {
-            {
-              console.warn(`Type of token '${token.type}' and format of value '${mode}' don't match!`);
-            }
-          }
-          break;
-        case "unknown":
-          {
-            console.warn(`Detect 'unknown' type of token!`);
-          }
-          break;
-      }
-      index++;
-    }
-    return compiled;
-  }
-  const LOCALE_ZH_HANS = "zh-Hans";
-  const LOCALE_ZH_HANT = "zh-Hant";
-  const LOCALE_EN = "en";
-  const LOCALE_FR = "fr";
-  const LOCALE_ES = "es";
-  const hasOwnProperty = Object.prototype.hasOwnProperty;
-  const hasOwn = (val, key) => hasOwnProperty.call(val, key);
-  const defaultFormatter = new BaseFormatter();
-  function include(str, parts) {
-    return !!parts.find((part) => str.indexOf(part) !== -1);
-  }
-  function startsWith(str, parts) {
-    return parts.find((part) => str.indexOf(part) === 0);
-  }
-  function normalizeLocale(locale, messages2) {
-    if (!locale) {
-      return;
-    }
-    locale = locale.trim().replace(/_/g, "-");
-    if (messages2 && messages2[locale]) {
-      return locale;
-    }
-    locale = locale.toLowerCase();
-    if (locale === "chinese") {
-      return LOCALE_ZH_HANS;
-    }
-    if (locale.indexOf("zh") === 0) {
-      if (locale.indexOf("-hans") > -1) {
-        return LOCALE_ZH_HANS;
-      }
-      if (locale.indexOf("-hant") > -1) {
-        return LOCALE_ZH_HANT;
-      }
-      if (include(locale, ["-tw", "-hk", "-mo", "-cht"])) {
-        return LOCALE_ZH_HANT;
-      }
-      return LOCALE_ZH_HANS;
-    }
-    const lang = startsWith(locale, [LOCALE_EN, LOCALE_FR, LOCALE_ES]);
-    if (lang) {
-      return lang;
-    }
-  }
-  class I18n {
-    constructor({ locale, fallbackLocale, messages: messages2, watcher, formater }) {
-      this.locale = LOCALE_EN;
-      this.fallbackLocale = LOCALE_EN;
-      this.message = {};
-      this.messages = {};
-      this.watchers = [];
-      if (fallbackLocale) {
-        this.fallbackLocale = fallbackLocale;
-      }
-      this.formater = formater || defaultFormatter;
-      this.messages = messages2 || {};
-      this.setLocale(locale || LOCALE_EN);
-      if (watcher) {
-        this.watchLocale(watcher);
-      }
-    }
-    setLocale(locale) {
-      const oldLocale = this.locale;
-      this.locale = normalizeLocale(locale, this.messages) || this.fallbackLocale;
-      if (!this.messages[this.locale]) {
-        this.messages[this.locale] = {};
-      }
-      this.message = this.messages[this.locale];
-      if (oldLocale !== this.locale) {
-        this.watchers.forEach((watcher) => {
-          watcher(this.locale, oldLocale);
-        });
-      }
-    }
-    getLocale() {
-      return this.locale;
-    }
-    watchLocale(fn2) {
-      const index = this.watchers.push(fn2) - 1;
-      return () => {
-        this.watchers.splice(index, 1);
-      };
-    }
-    add(locale, message, override = true) {
-      const curMessages = this.messages[locale];
-      if (curMessages) {
-        if (override) {
-          Object.assign(curMessages, message);
-        } else {
-          Object.keys(message).forEach((key) => {
-            if (!hasOwn(curMessages, key)) {
-              curMessages[key] = message[key];
-            }
-          });
-        }
-      } else {
-        this.messages[locale] = message;
-      }
-    }
-    f(message, values, delimiters) {
-      return this.formater.interpolate(message, values, delimiters).join("");
-    }
-    t(key, locale, values) {
-      let message = this.message;
-      if (typeof locale === "string") {
-        locale = normalizeLocale(locale, this.messages);
-        locale && (message = this.messages[locale]);
-      } else {
-        values = locale;
-      }
-      if (!hasOwn(message, key)) {
-        console.warn(`Cannot translate the value of keypath ${key}. Use the value of keypath as default.`);
-        return key;
-      }
-      return this.formater.interpolate(message[key], values).join("");
-    }
-  }
-  function watchAppLocale(appVm, i18n) {
-    if (appVm.$watchLocale) {
-      appVm.$watchLocale((newLocale) => {
-        i18n.setLocale(newLocale);
-      });
-    } else {
-      appVm.$watch(() => appVm.$locale, (newLocale) => {
-        i18n.setLocale(newLocale);
-      });
-    }
-  }
-  function getDefaultLocale() {
-    if (typeof uni !== "undefined" && uni.getLocale) {
-      return uni.getLocale();
-    }
-    if (typeof global !== "undefined" && global.getLocale) {
-      return global.getLocale();
-    }
-    return LOCALE_EN;
-  }
-  function initVueI18n(locale, messages2 = {}, fallbackLocale, watcher) {
-    if (typeof locale !== "string") {
-      [locale, messages2] = [
-        messages2,
-        locale
-      ];
-    }
-    if (typeof locale !== "string") {
-      locale = getDefaultLocale();
-    }
-    if (typeof fallbackLocale !== "string") {
-      fallbackLocale = typeof __uniConfig !== "undefined" && __uniConfig.fallbackLocale || LOCALE_EN;
-    }
-    const i18n = new I18n({
-      locale,
-      fallbackLocale,
-      messages: messages2,
-      watcher
-    });
-    let t2 = (key, values) => {
-      if (typeof getApp !== "function") {
-        t2 = function(key2, values2) {
-          return i18n.t(key2, values2);
-        };
-      } else {
-        let isWatchedAppLocale = false;
-        t2 = function(key2, values2) {
-          const appVm = getApp().$vm;
-          if (appVm) {
-            appVm.$locale;
-            if (!isWatchedAppLocale) {
-              isWatchedAppLocale = true;
-              watchAppLocale(appVm, i18n);
-            }
-          }
-          return i18n.t(key2, values2);
-        };
-      }
-      return t2(key, values);
-    };
-    return {
-      i18n,
-      f(message, values, delimiters) {
-        return i18n.f(message, values, delimiters);
-      },
-      t(key, values) {
-        return t2(key, values);
-      },
-      add(locale2, message, override = true) {
-        return i18n.add(locale2, message, override);
-      },
-      watch(fn2) {
-        return i18n.watchLocale(fn2);
-      },
-      getLocale() {
-        return i18n.getLocale();
-      },
-      setLocale(newLocale) {
-        return i18n.setLocale(newLocale);
-      }
-    };
-  }
+  var __easycom_2$8 = /* @__PURE__ */ _export_sfc(_sfc_main$1z, [["render", _sfc_render$1y], ["__scopeId", "data-v-61dfc0d0"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-forms/components/uni-forms-item/uni-forms-item.vue"]]);
   const leftWindow = {
     path: "windows/left-window.vue",
     style: {
@@ -15632,7 +15895,7 @@ if (uni.restoreGlobal) {
       }
     ]
   };
-  var t$9 = {
+  var t$8 = {
     leftWindow,
     topWindow,
     pages,
@@ -17382,8 +17645,8 @@ if (uni.restoreGlobal) {
     const n2 = t2.list, s2 = qt(e);
     return n2.some((e2) => e2.pagePath === s2);
   }
-  const $t = !!t$9.uniIdRouter;
-  const { loginPage: Kt, routerNeedLogin: Bt, resToLogin: Ht, needLoginPage: Wt, notNeedLoginPage: zt, loginPageInTabBar: Jt } = function({ pages: e = [], subPackages: n2 = [], uniIdRouter: s2 = {}, tabBar: o2 = {} } = t$9) {
+  const $t = !!t$8.uniIdRouter;
+  const { loginPage: Kt, routerNeedLogin: Bt, resToLogin: Ht, needLoginPage: Wt, notNeedLoginPage: zt, loginPageInTabBar: Jt } = function({ pages: e = [], subPackages: n2 = [], uniIdRouter: s2 = {}, tabBar: o2 = {} } = t$8) {
     const { loginPage: r2, needLogin: i2 = [], resToLogin: a2 = true } = s2, { needLoginPage: c2, notNeedLoginPage: u2 } = Nt(e), { needLoginPage: l2, notNeedLoginPage: h2 } = function(e2 = []) {
       const t2 = [], n3 = [];
       return e2.forEach((e3) => {
@@ -17492,7 +17755,7 @@ if (uni.restoreGlobal) {
       }(n2);
     });
   }
-  function en$6(e) {
+  function en$5(e) {
     !function(e2) {
       e2.onResponse = function(e3) {
         N(C, e3);
@@ -17842,37 +18105,37 @@ if (uni.restoreGlobal) {
     }
     Object.assign(gn, { get mixinDatacom() {
       return un(gn);
-    } }), en$6(gn), gn.addInterceptor = S, gn.removeInterceptor = P, gn.interceptObject = b, g === "web" && (window.uniCloud = gn);
+    } }), en$5(gn), gn.addInterceptor = S, gn.removeInterceptor = P, gn.interceptObject = b, g === "web" && (window.uniCloud = gn);
   })();
   var pn = gn;
-  var en$5 = {
+  var en$4 = {
     "uni-load-more.contentdown": "Pull up to show more",
     "uni-load-more.contentrefresh": "loading...",
     "uni-load-more.contentnomore": "No more data"
   };
-  var zhHans$5 = {
+  var zhHans$4 = {
     "uni-load-more.contentdown": "\u4E0A\u62C9\u663E\u793A\u66F4\u591A",
     "uni-load-more.contentrefresh": "\u6B63\u5728\u52A0\u8F7D...",
     "uni-load-more.contentnomore": "\u6CA1\u6709\u66F4\u591A\u6570\u636E\u4E86"
   };
-  var zhHant$5 = {
+  var zhHant$4 = {
     "uni-load-more.contentdown": "\u4E0A\u62C9\u986F\u793A\u66F4\u591A",
     "uni-load-more.contentrefresh": "\u6B63\u5728\u52A0\u8F09...",
     "uni-load-more.contentnomore": "\u6C92\u6709\u66F4\u591A\u6578\u64DA\u4E86"
   };
-  var messages$5 = {
-    en: en$5,
-    "zh-Hans": zhHans$5,
-    "zh-Hant": zhHant$5
+  var messages$4 = {
+    en: en$4,
+    "zh-Hans": zhHans$4,
+    "zh-Hant": zhHant$4
   };
   let platform$1;
   setTimeout(() => {
     platform$1 = uni.getSystemInfoSync().platform;
   }, 16);
   const {
-    t: t$8
-  } = initVueI18n(messages$5);
-  const _sfc_main$1z = {
+    t: t$7
+  } = initVueI18n(messages$4);
+  const _sfc_main$1y = {
     name: "UniLoadMore",
     emits: ["clickLoadMore"],
     props: {
@@ -17923,13 +18186,13 @@ if (uni.restoreGlobal) {
         return (Math.floor(this.iconSize / 24) || 1) * 2;
       },
       contentdownText() {
-        return this.contentText.contentdown || t$8("uni-load-more.contentdown");
+        return this.contentText.contentdown || t$7("uni-load-more.contentdown");
       },
       contentrefreshText() {
-        return this.contentText.contentrefresh || t$8("uni-load-more.contentrefresh");
+        return this.contentText.contentrefresh || t$7("uni-load-more.contentrefresh");
       },
       contentnomoreText() {
-        return this.contentText.contentnomore || t$8("uni-load-more.contentnomore");
+        return this.contentText.contentnomore || t$7("uni-load-more.contentnomore");
       }
     },
     mounted() {
@@ -17953,7 +18216,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1y(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1x(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", {
       class: "uni-load-more",
       onClick: _cache[0] || (_cache[0] = (...args) => $options.onClick && $options.onClick(...args))
@@ -17992,8 +18255,8 @@ if (uni.restoreGlobal) {
       }, vue.toDisplayString($props.status === "more" ? $options.contentdownText : $props.status === "loading" ? $options.contentrefreshText : $options.contentnomoreText), 5)) : vue.createCommentVNode("v-if", true)
     ]);
   }
-  var __easycom_0$2 = /* @__PURE__ */ _export_sfc(_sfc_main$1z, [["render", _sfc_render$1y], ["__scopeId", "data-v-90d4256a"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-load-more/components/uni-load-more/uni-load-more.vue"]]);
-  const _sfc_main$1y = {
+  var __easycom_0$2 = /* @__PURE__ */ _export_sfc(_sfc_main$1y, [["render", _sfc_render$1x], ["__scopeId", "data-v-90d4256a"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-load-more/components/uni-load-more/uni-load-more.vue"]]);
+  const _sfc_main$1x = {
     name: "uniDataChecklist",
     mixins: [pn.mixinDatacom || {}],
     emits: ["input", "update:modelValue", "change"],
@@ -18306,7 +18569,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1x(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1w(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_uni_load_more = resolveEasycom(vue.resolveDynamicComponent("uni-load-more"), __easycom_0$2);
     return vue.openBlock(), vue.createElementBlock("view", {
       class: "uni-data-checklist",
@@ -18412,7 +18675,7 @@ if (uni.restoreGlobal) {
       ], 64))
     ], 4);
   }
-  var __easycom_1$k = /* @__PURE__ */ _export_sfc(_sfc_main$1y, [["render", _sfc_render$1x], ["__scopeId", "data-v-84d5d996"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-data-checkbox/components/uni-data-checkbox/uni-data-checkbox.vue"]]);
+  var __easycom_1$k = /* @__PURE__ */ _export_sfc(_sfc_main$1x, [["render", _sfc_render$1w], ["__scopeId", "data-v-84d5d996"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-data-checkbox/components/uni-data-checkbox/uni-data-checkbox.vue"]]);
   class Calendar {
     constructor({
       date,
@@ -18708,7 +18971,7 @@ if (uni.restoreGlobal) {
       this.weeks = weeks;
     }
   }
-  const _sfc_main$1x = {
+  const _sfc_main$1w = {
     props: {
       weeks: {
         type: Object,
@@ -18746,7 +19009,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1w(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1v(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", {
       class: vue.normalizeClass(["uni-calendar-item__weeks-box", {
         "uni-calendar-item--disable": $props.weeks.disable,
@@ -18778,8 +19041,8 @@ if (uni.restoreGlobal) {
       }, null, 2)
     ], 34);
   }
-  var calendarItem = /* @__PURE__ */ _export_sfc(_sfc_main$1x, [["render", _sfc_render$1w], ["__scopeId", "data-v-39ec3f8e"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-datetime-picker/components/uni-datetime-picker/calendar-item.vue"]]);
-  var en$4 = {
+  var calendarItem = /* @__PURE__ */ _export_sfc(_sfc_main$1w, [["render", _sfc_render$1v], ["__scopeId", "data-v-39ec3f8e"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-datetime-picker/components/uni-datetime-picker/calendar-item.vue"]]);
+  var en$3 = {
     "uni-datetime-picker.selectDate": "select date",
     "uni-datetime-picker.selectTime": "select time",
     "uni-datetime-picker.selectDateTime": "select datetime",
@@ -18801,7 +19064,7 @@ if (uni.restoreGlobal) {
     "uni-calender.SUN": "SUN",
     "uni-calender.confirm": "confirm"
   };
-  var zhHans$4 = {
+  var zhHans$3 = {
     "uni-datetime-picker.selectDate": "\u9009\u62E9\u65E5\u671F",
     "uni-datetime-picker.selectTime": "\u9009\u62E9\u65F6\u95F4",
     "uni-datetime-picker.selectDateTime": "\u9009\u62E9\u65E5\u671F\u65F6\u95F4",
@@ -18823,7 +19086,7 @@ if (uni.restoreGlobal) {
     "uni-calender.SAT": "\u516D",
     "uni-calender.confirm": "\u786E\u8BA4"
   };
-  var zhHant$4 = {
+  var zhHant$3 = {
     "uni-datetime-picker.selectDate": "\u9078\u64C7\u65E5\u671F",
     "uni-datetime-picker.selectTime": "\u9078\u64C7\u6642\u9593",
     "uni-datetime-picker.selectDateTime": "\u9078\u64C7\u65E5\u671F\u6642\u9593",
@@ -18845,13 +19108,13 @@ if (uni.restoreGlobal) {
     "uni-calender.SAT": "\u516D",
     "uni-calender.confirm": "\u78BA\u8A8D"
   };
-  var messages$4 = {
-    en: en$4,
-    "zh-Hans": zhHans$4,
-    "zh-Hant": zhHant$4
+  var messages$3 = {
+    en: en$3,
+    "zh-Hans": zhHans$3,
+    "zh-Hant": zhHant$3
   };
-  const { t: t$7 } = initVueI18n(messages$4);
-  const _sfc_main$1w = {
+  const { t: t$6 } = initVueI18n(messages$3);
+  const _sfc_main$1v = {
     name: "UniDatetimePicker",
     components: {},
     data() {
@@ -19134,16 +19397,16 @@ if (uni.restoreGlobal) {
         }
       },
       selectTimeText() {
-        return t$7("uni-datetime-picker.selectTime");
+        return t$6("uni-datetime-picker.selectTime");
       },
       okText() {
-        return t$7("uni-datetime-picker.ok");
+        return t$6("uni-datetime-picker.ok");
       },
       clearText() {
-        return t$7("uni-datetime-picker.clear");
+        return t$6("uni-datetime-picker.clear");
       },
       cancelText() {
-        return t$7("uni-datetime-picker.cancel");
+        return t$6("uni-datetime-picker.cancel");
       }
     },
     mounted() {
@@ -19379,7 +19642,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1v(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1u(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "uni-datetime-picker" }, [
       vue.createElementVNode("view", {
         onClick: _cache[0] || (_cache[0] = (...args) => $options.initTimePicker && $options.initTimePicker(...args))
@@ -19530,11 +19793,11 @@ if (uni.restoreGlobal) {
       ], 6)) : vue.createCommentVNode("v-if", true)
     ]);
   }
-  var timePicker = /* @__PURE__ */ _export_sfc(_sfc_main$1w, [["render", _sfc_render$1v], ["__scopeId", "data-v-60a1244c"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-datetime-picker/components/uni-datetime-picker/time-picker.vue"]]);
+  var timePicker = /* @__PURE__ */ _export_sfc(_sfc_main$1v, [["render", _sfc_render$1u], ["__scopeId", "data-v-60a1244c"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-datetime-picker/components/uni-datetime-picker/time-picker.vue"]]);
   const {
-    t: t$6
-  } = initVueI18n(messages$4);
-  const _sfc_main$1v = {
+    t: t$5
+  } = initVueI18n(messages$3);
+  const _sfc_main$1u = {
     components: {
       calendarItem,
       timePicker
@@ -19729,46 +19992,46 @@ if (uni.restoreGlobal) {
         return res2;
       },
       selectDateText() {
-        return t$6("uni-datetime-picker.selectDate");
+        return t$5("uni-datetime-picker.selectDate");
       },
       startDateText() {
-        return this.startPlaceholder || t$6("uni-datetime-picker.startDate");
+        return this.startPlaceholder || t$5("uni-datetime-picker.startDate");
       },
       endDateText() {
-        return this.endPlaceholder || t$6("uni-datetime-picker.endDate");
+        return this.endPlaceholder || t$5("uni-datetime-picker.endDate");
       },
       okText() {
-        return t$6("uni-datetime-picker.ok");
+        return t$5("uni-datetime-picker.ok");
       },
       yearText() {
-        return t$6("uni-datetime-picker.year");
+        return t$5("uni-datetime-picker.year");
       },
       monthText() {
-        return t$6("uni-datetime-picker.month");
+        return t$5("uni-datetime-picker.month");
       },
       MONText() {
-        return t$6("uni-calender.MON");
+        return t$5("uni-calender.MON");
       },
       TUEText() {
-        return t$6("uni-calender.TUE");
+        return t$5("uni-calender.TUE");
       },
       WEDText() {
-        return t$6("uni-calender.WED");
+        return t$5("uni-calender.WED");
       },
       THUText() {
-        return t$6("uni-calender.THU");
+        return t$5("uni-calender.THU");
       },
       FRIText() {
-        return t$6("uni-calender.FRI");
+        return t$5("uni-calender.FRI");
       },
       SATText() {
-        return t$6("uni-calender.SAT");
+        return t$5("uni-calender.SAT");
       },
       SUNText() {
-        return t$6("uni-calender.SUN");
+        return t$5("uni-calender.SUN");
       },
       confirmText() {
-        return t$6("uni-calender.confirm");
+        return t$5("uni-calender.confirm");
       }
     },
     created() {
@@ -19941,7 +20204,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1u(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1t(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_calendar_item = vue.resolveComponent("calendar-item");
     const _component_time_picker = vue.resolveComponent("time-picker");
     const _component_uni_icons = resolveEasycom(vue.resolveDynamicComponent("uni-icons"), __easycom_1$n);
@@ -20124,11 +20387,11 @@ if (uni.restoreGlobal) {
       ], 2)) : vue.createCommentVNode("v-if", true)
     ], 32);
   }
-  var calendar = /* @__PURE__ */ _export_sfc(_sfc_main$1v, [["render", _sfc_render$1u], ["__scopeId", "data-v-94becebc"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-datetime-picker/components/uni-datetime-picker/calendar.vue"]]);
+  var calendar = /* @__PURE__ */ _export_sfc(_sfc_main$1u, [["render", _sfc_render$1t], ["__scopeId", "data-v-94becebc"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-datetime-picker/components/uni-datetime-picker/calendar.vue"]]);
   const {
-    t: t$5
-  } = initVueI18n(messages$4);
-  const _sfc_main$1u = {
+    t: t$4
+  } = initVueI18n(messages$3);
+  const _sfc_main$1t = {
     name: "UniDatetimePicker",
     options: {
       virtualHost: true
@@ -20335,7 +20598,7 @@ if (uni.restoreGlobal) {
         return this.isRange ? 653 : 301;
       },
       singlePlaceholderText() {
-        return this.placeholder || (this.type === "date" ? this.selectDateText : t$5("uni-datetime-picker.selectDateTime"));
+        return this.placeholder || (this.type === "date" ? this.selectDateText : t$4("uni-datetime-picker.selectDateTime"));
       },
       startPlaceholderText() {
         return this.startPlaceholder || this.startDateText;
@@ -20344,28 +20607,28 @@ if (uni.restoreGlobal) {
         return this.endPlaceholder || this.endDateText;
       },
       selectDateText() {
-        return t$5("uni-datetime-picker.selectDate");
+        return t$4("uni-datetime-picker.selectDate");
       },
       selectTimeText() {
-        return t$5("uni-datetime-picker.selectTime");
+        return t$4("uni-datetime-picker.selectTime");
       },
       startDateText() {
-        return this.startPlaceholder || t$5("uni-datetime-picker.startDate");
+        return this.startPlaceholder || t$4("uni-datetime-picker.startDate");
       },
       startTimeText() {
-        return t$5("uni-datetime-picker.startTime");
+        return t$4("uni-datetime-picker.startTime");
       },
       endDateText() {
-        return this.endPlaceholder || t$5("uni-datetime-picker.endDate");
+        return this.endPlaceholder || t$4("uni-datetime-picker.endDate");
       },
       endTimeText() {
-        return t$5("uni-datetime-picker.endTime");
+        return t$4("uni-datetime-picker.endTime");
       },
       okText() {
-        return t$5("uni-datetime-picker.ok");
+        return t$4("uni-datetime-picker.ok");
       },
       clearText() {
-        return t$5("uni-datetime-picker.clear");
+        return t$4("uni-datetime-picker.clear");
       },
       showClearIcon() {
         const {
@@ -20713,7 +20976,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1t(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1s(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_uni_icons = resolveEasycom(vue.resolveDynamicComponent("uni-icons"), __easycom_1$n);
     const _component_time_picker = vue.resolveComponent("time-picker");
     const _component_calendar = vue.resolveComponent("calendar");
@@ -21009,7 +21272,7 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  var __easycom_2$7 = /* @__PURE__ */ _export_sfc(_sfc_main$1u, [["render", _sfc_render$1t], ["__scopeId", "data-v-6e13d7e2"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-datetime-picker/components/uni-datetime-picker/uni-datetime-picker.vue"]]);
+  var __easycom_2$7 = /* @__PURE__ */ _export_sfc(_sfc_main$1t, [["render", _sfc_render$1s], ["__scopeId", "data-v-6e13d7e2"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-datetime-picker/components/uni-datetime-picker/uni-datetime-picker.vue"]]);
   var dataPicker = {
     props: {
       localdata: {
@@ -21529,7 +21792,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  const _sfc_main$1t = {
+  const _sfc_main$1s = {
     name: "UniDataPickerView",
     emits: ["nodeclick", "change", "datachange", "update:modelValue"],
     mixins: [dataPicker],
@@ -21646,7 +21909,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1s(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1r(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_uni_load_more = resolveEasycom(vue.resolveDynamicComponent("uni-load-more"), __easycom_0$2);
     return vue.openBlock(), vue.createElementBlock("view", { class: "uni-data-pickerview" }, [
       vue.createElementVNode("scroll-view", {
@@ -21711,8 +21974,8 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  var DataPickerView = /* @__PURE__ */ _export_sfc(_sfc_main$1t, [["render", _sfc_render$1s], ["__scopeId", "data-v-ac1803ac"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-data-picker/components/uni-data-pickerview/uni-data-pickerview.vue"]]);
-  const _sfc_main$1s = {
+  var DataPickerView = /* @__PURE__ */ _export_sfc(_sfc_main$1s, [["render", _sfc_render$1r], ["__scopeId", "data-v-ac1803ac"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-data-picker/components/uni-data-pickerview/uni-data-pickerview.vue"]]);
+  const _sfc_main$1r = {
     name: "UniDataPicker",
     emits: ["popupopened", "popupclosed", "nodeclick", "input", "change", "update:modelValue"],
     mixins: [dataPicker],
@@ -21926,7 +22189,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1r(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1q(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_uni_load_more = resolveEasycom(vue.resolveDynamicComponent("uni-load-more"), __easycom_0$2);
     const _component_uni_icons = resolveEasycom(vue.resolveDynamicComponent("uni-icons"), __easycom_1$n);
     const _component_data_picker_view = vue.resolveComponent("data-picker-view");
@@ -22050,8 +22313,8 @@ if (uni.restoreGlobal) {
       ])) : vue.createCommentVNode("v-if", true)
     ]);
   }
-  var __easycom_5$1 = /* @__PURE__ */ _export_sfc(_sfc_main$1s, [["render", _sfc_render$1r], ["__scopeId", "data-v-3ed22fe0"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-data-picker/components/uni-data-picker/uni-data-picker.vue"]]);
-  const _sfc_main$1r = {
+  var __easycom_5$1 = /* @__PURE__ */ _export_sfc(_sfc_main$1r, [["render", _sfc_render$1q], ["__scopeId", "data-v-3ed22fe0"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-data-picker/components/uni-data-picker/uni-data-picker.vue"]]);
+  const _sfc_main$1q = {
     name: "uni-stat-select",
     mixins: [pn.mixinDatacom || {}],
     data() {
@@ -22208,7 +22471,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1q(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1p(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_uni_icons = resolveEasycom(vue.resolveDynamicComponent("uni-icons"), __easycom_1$n);
     return vue.openBlock(), vue.createElementBlock("view", { class: "uni-stat__select" }, [
       $props.label ? (vue.openBlock(), vue.createElementBlock("span", {
@@ -22279,7 +22542,7 @@ if (uni.restoreGlobal) {
       ], 2)
     ]);
   }
-  var __easycom_1$j = /* @__PURE__ */ _export_sfc(_sfc_main$1r, [["render", _sfc_render$1q], ["__scopeId", "data-v-6b64008e"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-data-select/components/uni-data-select/uni-data-select.vue"]]);
+  var __easycom_1$j = /* @__PURE__ */ _export_sfc(_sfc_main$1q, [["render", _sfc_render$1p], ["__scopeId", "data-v-6b64008e"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-data-select/components/uni-data-select/uni-data-select.vue"]]);
   var pattern = {
     email: /^\S+?@\S+?\.\S+?$/,
     idcard: /^[1-9]\d{5}(18|19|([23]\d))\d{2}((0[1-9])|(10|11|12))(([0-2][1-9])|10|20|30|31)\d{3}[0-9Xx]$/,
@@ -22839,7 +23102,7 @@ if (uni.restoreGlobal) {
       return false;
     }
   };
-  const _sfc_main$1q = {
+  const _sfc_main$1p = {
     name: "uniForms",
     emits: ["validate", "submit"],
     options: {
@@ -23081,15 +23344,15 @@ if (uni.restoreGlobal) {
       _isEqual: isEqual
     }
   };
-  function _sfc_render$1p(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1o(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "uni-forms" }, [
       vue.createElementVNode("form", null, [
         vue.renderSlot(_ctx.$slots, "default", {}, void 0, true)
       ])
     ]);
   }
-  var __easycom_7 = /* @__PURE__ */ _export_sfc(_sfc_main$1q, [["render", _sfc_render$1p], ["__scopeId", "data-v-7ae0e404"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-forms/components/uni-forms/uni-forms.vue"]]);
-  const _sfc_main$1p = {
+  var __easycom_7 = /* @__PURE__ */ _export_sfc(_sfc_main$1p, [["render", _sfc_render$1o], ["__scopeId", "data-v-7ae0e404"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-forms/components/uni-forms/uni-forms.vue"]]);
+  const _sfc_main$1o = {
     name: "UniSection",
     emits: ["click"],
     props: {
@@ -23148,7 +23411,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1o(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1n(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "uni-section" }, [
       vue.createElementVNode("view", {
         class: "uni-section-header",
@@ -23181,8 +23444,8 @@ if (uni.restoreGlobal) {
       ], 4)
     ]);
   }
-  var __easycom_1$i = /* @__PURE__ */ _export_sfc(_sfc_main$1p, [["render", _sfc_render$1o], ["__scopeId", "data-v-f7ca1098"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-section/components/uni-section/uni-section.vue"]]);
-  const _sfc_main$1o = {
+  var __easycom_1$i = /* @__PURE__ */ _export_sfc(_sfc_main$1o, [["render", _sfc_render$1n], ["__scopeId", "data-v-f7ca1098"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-section/components/uni-section/uni-section.vue"]]);
+  const _sfc_main$1n = {
     name: "UniSegmentedControl",
     emits: ["clickItem"],
     props: {
@@ -23231,7 +23494,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1n(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1m(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", {
       class: vue.normalizeClass([[$props.styleType === "text" ? "segmented-control--text" : "segmented-control--button"], "segmented-control"]),
       style: vue.normalizeStyle({ borderColor: $props.styleType === "text" ? "" : $props.activeColor })
@@ -23258,8 +23521,8 @@ if (uni.restoreGlobal) {
       }), 128))
     ], 6);
   }
-  var __easycom_1$h = /* @__PURE__ */ _export_sfc(_sfc_main$1o, [["render", _sfc_render$1n], ["__scopeId", "data-v-064e9cd1"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-segmented-control/components/uni-segmented-control/uni-segmented-control.vue"]]);
-  const _sfc_main$1n = {
+  var __easycom_1$h = /* @__PURE__ */ _export_sfc(_sfc_main$1n, [["render", _sfc_render$1m], ["__scopeId", "data-v-064e9cd1"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-segmented-control/components/uni-segmented-control/uni-segmented-control.vue"]]);
+  const _sfc_main$1m = {
     data() {
       return {
         baseFormData: {
@@ -23452,7 +23715,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1m(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1l(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_uni_card = resolveEasycom(vue.resolveDynamicComponent("uni-card"), __easycom_0$3);
     const _component_uni_easyinput = resolveEasycom(vue.resolveDynamicComponent("uni-easyinput"), __easycom_1$l);
     const _component_uni_forms_item = resolveEasycom(vue.resolveDynamicComponent("uni-forms-item"), __easycom_2$8);
@@ -23850,8 +24113,8 @@ if (uni.restoreGlobal) {
       })
     ]);
   }
-  var PagesExtUIFormsForms = /* @__PURE__ */ _export_sfc(_sfc_main$1n, [["render", _sfc_render$1m], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/extUI/forms/forms.vue"]]);
-  const _sfc_main$1m = {
+  var PagesExtUIFormsForms = /* @__PURE__ */ _export_sfc(_sfc_main$1m, [["render", _sfc_render$1l], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/extUI/forms/forms.vue"]]);
+  const _sfc_main$1l = {
     name: "uniGroup",
     emits: ["click"],
     props: {
@@ -23909,7 +24172,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1l(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1k(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", {
       class: vue.normalizeClass(["uni-group", ["uni-group--" + $props.mode, $data.margin ? "group-margin" : ""]]),
       style: vue.normalizeStyle({ marginTop: `${$props.top}px` })
@@ -23930,8 +24193,8 @@ if (uni.restoreGlobal) {
       ], 2)
     ], 6);
   }
-  var __easycom_1$g = /* @__PURE__ */ _export_sfc(_sfc_main$1m, [["render", _sfc_render$1l], ["__scopeId", "data-v-176b3b64"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-group/components/uni-group/uni-group.vue"]]);
-  const _sfc_main$1l = {
+  var __easycom_1$g = /* @__PURE__ */ _export_sfc(_sfc_main$1l, [["render", _sfc_render$1k], ["__scopeId", "data-v-176b3b64"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-group/components/uni-group/uni-group.vue"]]);
+  const _sfc_main$1k = {
     components: {},
     data() {
       return {
@@ -23947,7 +24210,7 @@ if (uni.restoreGlobal) {
     },
     methods: {}
   };
-  function _sfc_render$1k(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1j(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_uni_card = resolveEasycom(vue.resolveDynamicComponent("uni-card"), __easycom_0$3);
     const _component_uni_group = resolveEasycom(vue.resolveDynamicComponent("uni-group"), __easycom_1$g);
     const _component_uni_section = resolveEasycom(vue.resolveDynamicComponent("uni-section"), __easycom_1$i);
@@ -24021,8 +24284,8 @@ if (uni.restoreGlobal) {
       })
     ]);
   }
-  var PagesExtUIGroupGroup = /* @__PURE__ */ _export_sfc(_sfc_main$1l, [["render", _sfc_render$1k], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/extUI/group/group.vue"]]);
-  const _sfc_main$1k = {
+  var PagesExtUIGroupGroup = /* @__PURE__ */ _export_sfc(_sfc_main$1k, [["render", _sfc_render$1j], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/extUI/group/group.vue"]]);
+  const _sfc_main$1j = {
     name: "UniBadge",
     emits: ["click"],
     props: {
@@ -24148,7 +24411,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1j(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1i(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "uni-badge--x" }, [
       vue.renderSlot(_ctx.$slots, "default", {}, void 0, true),
       $props.text ? (vue.openBlock(), vue.createElementBlock("text", {
@@ -24159,8 +24422,8 @@ if (uni.restoreGlobal) {
       }, vue.toDisplayString($options.displayValue), 7)) : vue.createCommentVNode("v-if", true)
     ]);
   }
-  var __easycom_1$f = /* @__PURE__ */ _export_sfc(_sfc_main$1k, [["render", _sfc_render$1j], ["__scopeId", "data-v-7c66581c"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-badge/components/uni-badge/uni-badge.vue"]]);
-  const _sfc_main$1j = {
+  var __easycom_1$f = /* @__PURE__ */ _export_sfc(_sfc_main$1j, [["render", _sfc_render$1i], ["__scopeId", "data-v-7c66581c"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-badge/components/uni-badge/uni-badge.vue"]]);
+  const _sfc_main$1i = {
     components: {},
     data() {
       return {
@@ -24181,7 +24444,7 @@ if (uni.restoreGlobal) {
       }, 100);
     }
   };
-  function _sfc_render$1i(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1h(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_uni_card = resolveEasycom(vue.resolveDynamicComponent("uni-card"), __easycom_0$3);
     const _component_uni_badge = resolveEasycom(vue.resolveDynamicComponent("uni-badge"), __easycom_1$f);
     const _component_uni_section = resolveEasycom(vue.resolveDynamicComponent("uni-section"), __easycom_1$i);
@@ -24364,8 +24627,8 @@ if (uni.restoreGlobal) {
       })
     ]);
   }
-  var PagesExtUIBadgeBadge = /* @__PURE__ */ _export_sfc(_sfc_main$1j, [["render", _sfc_render$1i], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/extUI/badge/badge.vue"]]);
-  const _sfc_main$1i = {
+  var PagesExtUIBadgeBadge = /* @__PURE__ */ _export_sfc(_sfc_main$1i, [["render", _sfc_render$1h], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/extUI/badge/badge.vue"]]);
+  const _sfc_main$1h = {
     data() {
       return {
         currentPage: ""
@@ -24423,7 +24686,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1h(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1g(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "uni-breadcrumb-item" }, [
       vue.createElementVNode("view", {
         class: vue.normalizeClass({
@@ -24443,8 +24706,8 @@ if (uni.restoreGlobal) {
       }, vue.toDisplayString($options.separator), 1))
     ]);
   }
-  var __easycom_1$e = /* @__PURE__ */ _export_sfc(_sfc_main$1i, [["render", _sfc_render$1h], ["__scopeId", "data-v-5b1de2b2"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-breadcrumb/components/uni-breadcrumb-item/uni-breadcrumb-item.vue"]]);
-  const _sfc_main$1h = {
+  var __easycom_1$e = /* @__PURE__ */ _export_sfc(_sfc_main$1h, [["render", _sfc_render$1g], ["__scopeId", "data-v-5b1de2b2"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-breadcrumb/components/uni-breadcrumb-item/uni-breadcrumb-item.vue"]]);
+  const _sfc_main$1g = {
     options: {
       virtualHost: true
     },
@@ -24464,13 +24727,13 @@ if (uni.restoreGlobal) {
       };
     }
   };
-  function _sfc_render$1g(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1f(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "uni-breadcrumb" }, [
       vue.renderSlot(_ctx.$slots, "default", {}, void 0, true)
     ]);
   }
-  var __easycom_2$6 = /* @__PURE__ */ _export_sfc(_sfc_main$1h, [["render", _sfc_render$1g], ["__scopeId", "data-v-5f079c20"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-breadcrumb/components/uni-breadcrumb/uni-breadcrumb.vue"]]);
-  const _sfc_main$1g = {
+  var __easycom_2$6 = /* @__PURE__ */ _export_sfc(_sfc_main$1g, [["render", _sfc_render$1f], ["__scopeId", "data-v-5f079c20"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-breadcrumb/components/uni-breadcrumb/uni-breadcrumb.vue"]]);
+  const _sfc_main$1f = {
     components: {},
     data() {
       return {
@@ -24487,7 +24750,7 @@ if (uni.restoreGlobal) {
       };
     }
   };
-  function _sfc_render$1f(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1e(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_uni_card = resolveEasycom(vue.resolveDynamicComponent("uni-card"), __easycom_0$3);
     const _component_uni_breadcrumb_item = resolveEasycom(vue.resolveDynamicComponent("uni-breadcrumb-item"), __easycom_1$e);
     const _component_uni_breadcrumb = resolveEasycom(vue.resolveDynamicComponent("uni-breadcrumb"), __easycom_2$6);
@@ -24554,8 +24817,8 @@ if (uni.restoreGlobal) {
       })
     ]);
   }
-  var PagesExtUIBreadcrumbBreadcrumb = /* @__PURE__ */ _export_sfc(_sfc_main$1g, [["render", _sfc_render$1f], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/extUI/breadcrumb/breadcrumb.vue"]]);
-  const _sfc_main$1f = {
+  var PagesExtUIBreadcrumbBreadcrumb = /* @__PURE__ */ _export_sfc(_sfc_main$1f, [["render", _sfc_render$1e], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/extUI/breadcrumb/breadcrumb.vue"]]);
+  const _sfc_main$1e = {
     name: "UniDrawer",
     components: {},
     emits: ["change"],
@@ -24615,7 +24878,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1e(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1d(_ctx, _cache, $props, $setup, $data, $options) {
     return $data.visibleSync ? (vue.openBlock(), vue.createElementBlock("view", {
       key: 0,
       class: vue.normalizeClass([{ "uni-drawer--visible": $data.showDrawer }, "uni-drawer"]),
@@ -24633,8 +24896,8 @@ if (uni.restoreGlobal) {
       ], 6)
     ], 34)) : vue.createCommentVNode("v-if", true);
   }
-  var __easycom_1$d = /* @__PURE__ */ _export_sfc(_sfc_main$1f, [["render", _sfc_render$1e], ["__scopeId", "data-v-558f1882"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-drawer/components/uni-drawer/uni-drawer.vue"]]);
-  const _sfc_main$1e = {
+  var __easycom_1$d = /* @__PURE__ */ _export_sfc(_sfc_main$1e, [["render", _sfc_render$1d], ["__scopeId", "data-v-558f1882"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-drawer/components/uni-drawer/uni-drawer.vue"]]);
+  const _sfc_main$1d = {
     data() {
       return {
         showRight: false,
@@ -24670,7 +24933,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1d(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1c(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_uni_card = resolveEasycom(vue.resolveDynamicComponent("uni-card"), __easycom_0$3);
     const _component_uni_drawer = resolveEasycom(vue.resolveDynamicComponent("uni-drawer"), __easycom_1$d);
     const _component_uni_section = resolveEasycom(vue.resolveDynamicComponent("uni-section"), __easycom_1$i);
@@ -24777,29 +25040,8 @@ if (uni.restoreGlobal) {
       })
     ]);
   }
-  var PagesExtUIDrawerDrawer = /* @__PURE__ */ _export_sfc(_sfc_main$1e, [["render", _sfc_render$1d], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/extUI/drawer/drawer.vue"]]);
-  var popup = {
-    data() {
-      return {};
-    },
-    created() {
-      this.popup = this.getParent();
-    },
-    methods: {
-      getParent(name = "uniPopup") {
-        let parent = this.$parent;
-        let parentName = parent.$options.name;
-        while (parentName !== name) {
-          parent = parent.$parent;
-          if (!parent)
-            return false;
-          parentName = parent.$options.name;
-        }
-        return parent;
-      }
-    }
-  };
-  const _sfc_main$1d = {
+  var PagesExtUIDrawerDrawer = /* @__PURE__ */ _export_sfc(_sfc_main$1d, [["render", _sfc_render$1c], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/extUI/drawer/drawer.vue"]]);
+  const _sfc_main$1c = {
     name: "uniPopupMessage",
     mixins: [popup],
     props: {
@@ -24838,7 +25080,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1c(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1b(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "uni-popup-message" }, [
       vue.createElementVNode("view", {
         class: vue.normalizeClass(["uni-popup-message__box fixforpc-width", "uni-popup__" + $props.type])
@@ -24851,192 +25093,8 @@ if (uni.restoreGlobal) {
       ], 2)
     ]);
   }
-  var __easycom_3$3 = /* @__PURE__ */ _export_sfc(_sfc_main$1d, [["render", _sfc_render$1c], ["__scopeId", "data-v-38167fe2"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-popup/components/uni-popup-message/uni-popup-message.vue"]]);
-  var en$3 = {
-    "uni-popup.cancel": "cancel",
-    "uni-popup.ok": "ok",
-    "uni-popup.placeholder": "pleace enter",
-    "uni-popup.title": "Hint",
-    "uni-popup.shareTitle": "Share to"
-  };
-  var zhHans$3 = {
-    "uni-popup.cancel": "\u53D6\u6D88",
-    "uni-popup.ok": "\u786E\u5B9A",
-    "uni-popup.placeholder": "\u8BF7\u8F93\u5165",
-    "uni-popup.title": "\u63D0\u793A",
-    "uni-popup.shareTitle": "\u5206\u4EAB\u5230"
-  };
-  var zhHant$3 = {
-    "uni-popup.cancel": "\u53D6\u6D88",
-    "uni-popup.ok": "\u78BA\u5B9A",
-    "uni-popup.placeholder": "\u8ACB\u8F38\u5165",
-    "uni-popup.title": "\u63D0\u793A",
-    "uni-popup.shareTitle": "\u5206\u4EAB\u5230"
-  };
-  var messages$3 = {
-    en: en$3,
-    "zh-Hans": zhHans$3,
-    "zh-Hant": zhHant$3
-  };
-  const { t: t$4 } = initVueI18n(messages$3);
-  const _sfc_main$1c = {
-    name: "uniPopupDialog",
-    mixins: [popup],
-    emits: ["confirm", "close"],
-    props: {
-      value: {
-        type: [String, Number],
-        default: ""
-      },
-      placeholder: {
-        type: [String, Number],
-        default: ""
-      },
-      type: {
-        type: String,
-        default: "error"
-      },
-      mode: {
-        type: String,
-        default: "base"
-      },
-      title: {
-        type: String,
-        default: ""
-      },
-      content: {
-        type: String,
-        default: ""
-      },
-      beforeClose: {
-        type: Boolean,
-        default: false
-      },
-      cancelText: {
-        type: String,
-        default: ""
-      },
-      confirmText: {
-        type: String,
-        default: ""
-      }
-    },
-    data() {
-      return {
-        dialogType: "error",
-        focus: false,
-        val: ""
-      };
-    },
-    computed: {
-      okText() {
-        return this.confirmText || t$4("uni-popup.ok");
-      },
-      closeText() {
-        return this.cancelText || t$4("uni-popup.cancel");
-      },
-      placeholderText() {
-        return this.placeholder || t$4("uni-popup.placeholder");
-      },
-      titleText() {
-        return this.title || t$4("uni-popup.title");
-      }
-    },
-    watch: {
-      type(val) {
-        this.dialogType = val;
-      },
-      mode(val) {
-        if (val === "input") {
-          this.dialogType = "info";
-        }
-      },
-      value(val) {
-        this.val = val;
-      }
-    },
-    created() {
-      this.popup.disableMask();
-      if (this.mode === "input") {
-        this.dialogType = "info";
-        this.val = this.value;
-      } else {
-        this.dialogType = this.type;
-      }
-    },
-    mounted() {
-      this.focus = true;
-    },
-    methods: {
-      onOk() {
-        if (this.mode === "input") {
-          this.$emit("confirm", this.val);
-        } else {
-          this.$emit("confirm");
-        }
-        if (this.beforeClose)
-          return;
-        this.popup.close();
-      },
-      closeDialog() {
-        this.$emit("close");
-        if (this.beforeClose)
-          return;
-        this.popup.close();
-      },
-      close() {
-        this.popup.close();
-      }
-    }
-  };
-  function _sfc_render$1b(_ctx, _cache, $props, $setup, $data, $options) {
-    return vue.openBlock(), vue.createElementBlock("view", { class: "uni-popup-dialog" }, [
-      vue.createElementVNode("view", { class: "uni-dialog-title" }, [
-        vue.createElementVNode("text", {
-          class: vue.normalizeClass(["uni-dialog-title-text", ["uni-popup__" + $data.dialogType]])
-        }, vue.toDisplayString($options.titleText), 3)
-      ]),
-      $props.mode === "base" ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 0,
-        class: "uni-dialog-content"
-      }, [
-        vue.renderSlot(_ctx.$slots, "default", {}, () => [
-          vue.createElementVNode("text", { class: "uni-dialog-content-text" }, vue.toDisplayString($props.content), 1)
-        ], true)
-      ])) : (vue.openBlock(), vue.createElementBlock("view", {
-        key: 1,
-        class: "uni-dialog-content"
-      }, [
-        vue.renderSlot(_ctx.$slots, "default", {}, () => [
-          vue.withDirectives(vue.createElementVNode("input", {
-            class: "uni-dialog-input",
-            "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $data.val = $event),
-            type: "text",
-            placeholder: $options.placeholderText,
-            focus: $data.focus
-          }, null, 8, ["placeholder", "focus"]), [
-            [vue.vModelText, $data.val]
-          ])
-        ], true)
-      ])),
-      vue.createElementVNode("view", { class: "uni-dialog-button-group" }, [
-        vue.createElementVNode("view", {
-          class: "uni-dialog-button",
-          onClick: _cache[1] || (_cache[1] = (...args) => $options.closeDialog && $options.closeDialog(...args))
-        }, [
-          vue.createElementVNode("text", { class: "uni-dialog-button-text" }, vue.toDisplayString($options.closeText), 1)
-        ]),
-        vue.createElementVNode("view", {
-          class: "uni-dialog-button uni-border-left",
-          onClick: _cache[2] || (_cache[2] = (...args) => $options.onOk && $options.onOk(...args))
-        }, [
-          vue.createElementVNode("text", { class: "uni-dialog-button-text uni-button-color" }, vue.toDisplayString($options.okText), 1)
-        ])
-      ])
-    ]);
-  }
-  var __easycom_4$2 = /* @__PURE__ */ _export_sfc(_sfc_main$1c, [["render", _sfc_render$1b], ["__scopeId", "data-v-6f54520a"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-popup/components/uni-popup-dialog/uni-popup-dialog.vue"]]);
-  const { t: t$3 } = initVueI18n(messages$3);
+  var __easycom_3$3 = /* @__PURE__ */ _export_sfc(_sfc_main$1c, [["render", _sfc_render$1b], ["__scopeId", "data-v-38167fe2"], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-popup/components/uni-popup-message/uni-popup-message.vue"]]);
+  const { t: t$3 } = initVueI18n(messages$5);
   const _sfc_main$1b = {
     name: "UniPopupShare",
     mixins: [popup],

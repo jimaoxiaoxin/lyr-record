@@ -1781,7 +1781,7 @@ if (typeof uni !== 'undefined' && uni && uni.requireGlobal) {
   var __easycom_4 = /* @__PURE__ */ _export_sfc(_sfc_main3, [["render", _sfc_render3], ["styles", [_style_03]], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-list/components/uni-list/uni-list.vue"]]);
 
   // ../../../../../../Users/clement.lin.local/Documents/HBuilderProjects/test1/unpackage/dist/dev/.nvue/pages/tabBar/API/API.js
-  var import_vue7 = __toESM(require_vue());
+  var import_vue6 = __toESM(require_vue());
 
   // ../../../../../../Users/clement.lin.local/Documents/HBuilderProjects/test1/unpackage/dist/dev/.nvue/uni-section.js
   var import_vue5 = __toESM(require_vue());
@@ -2165,40 +2165,6 @@ if (typeof uni !== 'undefined' && uni && uni.requireGlobal) {
     };
   }
 
-  // ../../../../../../Users/clement.lin.local/Documents/HBuilderProjects/test1/unpackage/dist/dev/.nvue/u-link.js
-  var import_vue6 = __toESM(require_vue());
-  var _sfc_main5 = {
-    name: "u-link",
-    props: {
-      href: {
-        type: String,
-        default: ""
-      },
-      text: {
-        type: String,
-        default: ""
-      },
-      inWhiteList: {
-        type: Boolean,
-        default: false
-      }
-    },
-    methods: {
-      openURL() {
-        plus.runtime.openURL(this.href);
-      }
-    }
-  };
-  function _sfc_render5(_ctx, _cache, $props, $setup, $data, $options) {
-    return (0, import_vue6.openBlock)(), (0, import_vue6.createElementBlock)("u-text", {
-      style: { "text-decoration": "underline" },
-      href: $props.href,
-      onClick: _cache[0] || (_cache[0] = (...args) => $options.openURL && $options.openURL(...args)),
-      inWhiteList: $props.inWhiteList
-    }, (0, import_vue6.toDisplayString)($props.text), 9, ["href", "inWhiteList"]);
-  }
-  var __easycom_0 = /* @__PURE__ */ _export_sfc(_sfc_main5, [["render", _sfc_render5], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/components/u-link/u-link.vue"]]);
-
   // ../../../../../../Users/clement.lin.local/Documents/HBuilderProjects/test1/unpackage/dist/dev/.nvue/pages/tabBar/API/API.js
   var __defProp2 = Object.defineProperty;
   var __defProps = Object.defineProperties;
@@ -2379,28 +2345,28 @@ if (typeof uni !== 'undefined' && uni && uni.requireGlobal) {
     }
   };
   function _sfc_render$5(_ctx, _cache, $props, $setup, $data, $options) {
-    return (0, import_vue7.openBlock)(), (0, import_vue7.createElementBlock)("view", {
+    return (0, import_vue6.openBlock)(), (0, import_vue6.createElementBlock)("view", {
       class: "uni-popup-dialog",
       renderWhole: true
     }, [
-      (0, import_vue7.createElementVNode)("view", { class: "uni-dialog-title" }, [
-        (0, import_vue7.createElementVNode)("u-text", {
-          class: (0, import_vue7.normalizeClass)(["uni-dialog-title-text", ["uni-popup__" + $data.dialogType]])
-        }, (0, import_vue7.toDisplayString)($options.titleText), 3)
+      (0, import_vue6.createElementVNode)("view", { class: "uni-dialog-title" }, [
+        (0, import_vue6.createElementVNode)("u-text", {
+          class: (0, import_vue6.normalizeClass)(["uni-dialog-title-text", ["uni-popup__" + $data.dialogType]])
+        }, (0, import_vue6.toDisplayString)($options.titleText), 3)
       ]),
-      $props.mode === "base" ? ((0, import_vue7.openBlock)(), (0, import_vue7.createElementBlock)("view", {
+      $props.mode === "base" ? ((0, import_vue6.openBlock)(), (0, import_vue6.createElementBlock)("view", {
         key: 0,
         class: "uni-dialog-content"
       }, [
-        (0, import_vue7.renderSlot)(_ctx.$slots, "default", {}, () => [
-          (0, import_vue7.createElementVNode)("u-text", { class: "uni-dialog-content-text" }, (0, import_vue7.toDisplayString)($props.content), 1)
+        (0, import_vue6.renderSlot)(_ctx.$slots, "default", {}, () => [
+          (0, import_vue6.createElementVNode)("u-text", { class: "uni-dialog-content-text" }, (0, import_vue6.toDisplayString)($props.content), 1)
         ])
-      ])) : ((0, import_vue7.openBlock)(), (0, import_vue7.createElementBlock)("view", {
+      ])) : ((0, import_vue6.openBlock)(), (0, import_vue6.createElementBlock)("view", {
         key: 1,
         class: "uni-dialog-content"
       }, [
-        (0, import_vue7.renderSlot)(_ctx.$slots, "default", {}, () => [
-          (0, import_vue7.createElementVNode)("u-input", {
+        (0, import_vue6.renderSlot)(_ctx.$slots, "default", {}, () => [
+          (0, import_vue6.createElementVNode)("u-input", {
             class: "uni-dialog-input",
             modelValue: $data.val,
             onInput: _cache[0] || (_cache[0] = ($event) => $data.val = $event.detail.value),
@@ -2410,18 +2376,18 @@ if (typeof uni !== 'undefined' && uni && uni.requireGlobal) {
           }, null, 40, ["modelValue", "placeholder", "focus"])
         ])
       ])),
-      (0, import_vue7.createElementVNode)("view", { class: "uni-dialog-button-group" }, [
-        (0, import_vue7.createElementVNode)("view", {
+      (0, import_vue6.createElementVNode)("view", { class: "uni-dialog-button-group" }, [
+        (0, import_vue6.createElementVNode)("view", {
           class: "uni-dialog-button",
           onClick: _cache[1] || (_cache[1] = (...args) => $options.closeDialog && $options.closeDialog(...args))
         }, [
-          (0, import_vue7.createElementVNode)("u-text", { class: "uni-dialog-button-text" }, (0, import_vue7.toDisplayString)($options.closeText), 1)
+          (0, import_vue6.createElementVNode)("u-text", { class: "uni-dialog-button-text" }, (0, import_vue6.toDisplayString)($options.closeText), 1)
         ]),
-        (0, import_vue7.createElementVNode)("view", {
+        (0, import_vue6.createElementVNode)("view", {
           class: "uni-dialog-button uni-border-left",
           onClick: _cache[2] || (_cache[2] = (...args) => $options.onOk && $options.onOk(...args))
         }, [
-          (0, import_vue7.createElementVNode)("u-text", { class: "uni-dialog-button-text uni-button-color" }, (0, import_vue7.toDisplayString)($options.okText), 1)
+          (0, import_vue6.createElementVNode)("u-text", { class: "uni-dialog-button-text uni-button-color" }, (0, import_vue6.toDisplayString)($options.okText), 1)
         ])
       ])
     ]);
@@ -2767,17 +2733,17 @@ if (typeof uni !== 'undefined' && uni && uni.requireGlobal) {
     }
   };
   function _sfc_render$4(_ctx, _cache, $props, $setup, $data, $options) {
-    return $data.isShow ? ((0, import_vue7.openBlock)(), (0, import_vue7.createElementBlock)("view", {
+    return $data.isShow ? ((0, import_vue6.openBlock)(), (0, import_vue6.createElementBlock)("view", {
       key: 0,
       ref: "ani",
       animation: $data.animationData,
-      class: (0, import_vue7.normalizeClass)($props.customClass),
-      style: (0, import_vue7.normalizeStyle)($options.transformStyles),
+      class: (0, import_vue6.normalizeClass)($props.customClass),
+      style: (0, import_vue6.normalizeStyle)($options.transformStyles),
       onClick: _cache[0] || (_cache[0] = (...args) => $options.onClick && $options.onClick(...args)),
       renderWhole: true
     }, [
-      (0, import_vue7.renderSlot)(_ctx.$slots, "default")
-    ], 14, ["animation"])) : (0, import_vue7.createCommentVNode)("v-if", true);
+      (0, import_vue6.renderSlot)(_ctx.$slots, "default")
+    ], 14, ["animation"])) : (0, import_vue6.createCommentVNode)("v-if", true);
   }
   var __easycom_0$1 = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$4], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-transition/components/uni-transition/uni-transition.vue"]]);
   var _style_0$2 = { "uni-popup": { "": { "position": "fixed" }, ".top": { "top": 0 }, ".left": { "top": 0 }, ".right": { "top": 0 } }, "uni-popup__wrapper": { ".uni-popup ": { "position": "relative" }, ".uni-popup .left": { "paddingTop": 0, "flex": 1 }, ".uni-popup .right": { "paddingTop": 0, "flex": 1 } }, "fixforpc-top": { "": { "top": 0 } } };
@@ -3072,16 +3038,16 @@ if (typeof uni !== 'undefined' && uni && uni.requireGlobal) {
     }
   };
   function _sfc_render$3(_ctx, _cache, $props, $setup, $data, $options) {
-    const _component_uni_transition = resolveEasycom((0, import_vue7.resolveDynamicComponent)("uni-transition"), __easycom_0$1);
-    return $data.showPopup ? ((0, import_vue7.openBlock)(), (0, import_vue7.createElementBlock)("view", {
+    const _component_uni_transition = resolveEasycom((0, import_vue6.resolveDynamicComponent)("uni-transition"), __easycom_0$1);
+    return $data.showPopup ? ((0, import_vue6.openBlock)(), (0, import_vue6.createElementBlock)("view", {
       key: 0,
-      class: (0, import_vue7.normalizeClass)(["uni-popup", [$data.popupstyle, $options.isDesktop ? "fixforpc-z-index" : ""]]),
+      class: (0, import_vue6.normalizeClass)(["uni-popup", [$data.popupstyle, $options.isDesktop ? "fixforpc-z-index" : ""]]),
       renderWhole: true
     }, [
-      (0, import_vue7.createElementVNode)("view", {
+      (0, import_vue6.createElementVNode)("view", {
         onTouchstart: _cache[1] || (_cache[1] = (...args) => $options.touchstart && $options.touchstart(...args))
       }, [
-        $data.maskShow ? ((0, import_vue7.openBlock)(), (0, import_vue7.createBlock)(_component_uni_transition, {
+        $data.maskShow ? ((0, import_vue6.openBlock)(), (0, import_vue6.createBlock)(_component_uni_transition, {
           key: "1",
           name: "mask",
           "mode-class": "fade",
@@ -3089,8 +3055,8 @@ if (typeof uni !== 'undefined' && uni && uni.requireGlobal) {
           duration: $data.duration,
           show: $data.showTrans,
           onClick: $options.onTap
-        }, null, 8, ["styles", "duration", "show", "onClick"])) : (0, import_vue7.createCommentVNode)("v-if", true),
-        (0, import_vue7.createVNode)(_component_uni_transition, {
+        }, null, 8, ["styles", "duration", "show", "onClick"])) : (0, import_vue6.createCommentVNode)("v-if", true),
+        (0, import_vue6.createVNode)(_component_uni_transition, {
           key: "2",
           "mode-class": $data.ani,
           name: "content",
@@ -3099,19 +3065,19 @@ if (typeof uni !== 'undefined' && uni && uni.requireGlobal) {
           show: $data.showTrans,
           onClick: $options.onTap
         }, {
-          default: (0, import_vue7.withCtx)(() => [
-            (0, import_vue7.createElementVNode)("view", {
-              class: (0, import_vue7.normalizeClass)(["uni-popup__wrapper", [$data.popupstyle]]),
-              style: (0, import_vue7.normalizeStyle)({ backgroundColor: $options.bg }),
+          default: (0, import_vue6.withCtx)(() => [
+            (0, import_vue6.createElementVNode)("view", {
+              class: (0, import_vue6.normalizeClass)(["uni-popup__wrapper", [$data.popupstyle]]),
+              style: (0, import_vue6.normalizeStyle)({ backgroundColor: $options.bg }),
               onClick: _cache[0] || (_cache[0] = (...args) => $options.clear && $options.clear(...args))
             }, [
-              (0, import_vue7.renderSlot)(_ctx.$slots, "default")
+              (0, import_vue6.renderSlot)(_ctx.$slots, "default")
             ], 6)
           ]),
           _: 3
         }, 8, ["mode-class", "styles", "duration", "show", "onClick"])
       ], 32)
-    ], 2)) : (0, import_vue7.createCommentVNode)("v-if", true);
+    ], 2)) : (0, import_vue6.createCommentVNode)("v-if", true);
   }
   var __easycom_42 = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$3], ["styles", [_style_0$2]], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/uni_modules/uni-popup/components/uni-popup/uni-popup.vue"]]);
   var _sfc_main$2 = {
@@ -3124,16 +3090,16 @@ if (typeof uni !== 'undefined' && uni && uni.requireGlobal) {
     }
   };
   function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
-    return (0, import_vue7.openBlock)(), (0, import_vue7.createElementBlock)("view", {
+    return (0, import_vue6.openBlock)(), (0, import_vue6.createElementBlock)("view", {
       class: "common-page-head",
       renderWhole: true
     }, [
-      (0, import_vue7.createElementVNode)("view", { class: "common-page-head-title" }, [
-        (0, import_vue7.createElementVNode)("u-text", null, (0, import_vue7.toDisplayString)($props.title), 1)
+      (0, import_vue6.createElementVNode)("view", { class: "common-page-head-title" }, [
+        (0, import_vue6.createElementVNode)("u-text", null, (0, import_vue6.toDisplayString)($props.title), 1)
       ])
     ]);
   }
-  var __easycom_02 = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$2], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/components/page-head/page-head.vue"]]);
+  var __easycom_0 = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$2], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/components/page-head/page-head.vue"]]);
   var _style_0$12 = { "button": { "": { "marginTop": "30rpx", "marginLeft": 0, "marginRight": 0 } }, "btn-area": { "": { "paddingTop": "30rpx" } } };
   var _sfc_main$12 = {
     data() {
@@ -3263,66 +3229,66 @@ if (typeof uni !== 'undefined' && uni && uni.requireGlobal) {
     }
   };
   function _sfc_render$12(_ctx, _cache, $props, $setup, $data, $options) {
-    const _component_page_head = resolveEasycom((0, import_vue7.resolveDynamicComponent)("page-head"), __easycom_02);
-    const _component_button = (0, import_vue7.resolveComponent)("button");
-    return (0, import_vue7.openBlock)(), (0, import_vue7.createElementBlock)("view", {
+    const _component_page_head = resolveEasycom((0, import_vue6.resolveDynamicComponent)("page-head"), __easycom_0);
+    const _component_button = (0, import_vue6.resolveComponent)("button");
+    return (0, import_vue6.openBlock)(), (0, import_vue6.createElementBlock)("view", {
       class: "uni-padding-wrap",
       renderWhole: true
     }, [
-      (0, import_vue7.createVNode)(_component_page_head, { title: $data.title }, null, 8, ["title"]),
-      (0, import_vue7.createVNode)(_component_button, {
+      (0, import_vue6.createVNode)(_component_page_head, { title: $data.title }, null, 8, ["title"]),
+      (0, import_vue6.createVNode)(_component_button, {
         class: "button",
         onClick: $options.setTabBarBadge
       }, {
-        default: (0, import_vue7.withCtx)(() => [
-          (0, import_vue7.createTextVNode)((0, import_vue7.toDisplayString)(!$data.hasSetTabBarBadge ? "\u8BBE\u7F6Etab\u5FBD\u6807" : "\u79FB\u9664tab\u5FBD\u6807"), 1)
+        default: (0, import_vue6.withCtx)(() => [
+          (0, import_vue6.createTextVNode)((0, import_vue6.toDisplayString)(!$data.hasSetTabBarBadge ? "\u8BBE\u7F6Etab\u5FBD\u6807" : "\u79FB\u9664tab\u5FBD\u6807"), 1)
         ]),
         _: 1
       }, 8, ["onClick"]),
-      (0, import_vue7.createVNode)(_component_button, {
+      (0, import_vue6.createVNode)(_component_button, {
         class: "button",
         onClick: $options.showTabBarRedDot
       }, {
-        default: (0, import_vue7.withCtx)(() => [
-          (0, import_vue7.createTextVNode)((0, import_vue7.toDisplayString)(!$data.hasShownTabBarRedDot ? "\u663E\u793A\u7EA2\u70B9" : "\u79FB\u9664\u7EA2\u70B9"), 1)
+        default: (0, import_vue6.withCtx)(() => [
+          (0, import_vue6.createTextVNode)((0, import_vue6.toDisplayString)(!$data.hasShownTabBarRedDot ? "\u663E\u793A\u7EA2\u70B9" : "\u79FB\u9664\u7EA2\u70B9"), 1)
         ]),
         _: 1
       }, 8, ["onClick"]),
-      (0, import_vue7.createVNode)(_component_button, {
+      (0, import_vue6.createVNode)(_component_button, {
         class: "button",
         onClick: $options.customStyle
       }, {
-        default: (0, import_vue7.withCtx)(() => [
-          (0, import_vue7.createTextVNode)((0, import_vue7.toDisplayString)(!$data.hasCustomedStyle ? "\u81EA\u5B9A\u4E49Tab\u6837\u5F0F" : "\u79FB\u9664\u81EA\u5B9A\u4E49\u6837\u5F0F"), 1)
+        default: (0, import_vue6.withCtx)(() => [
+          (0, import_vue6.createTextVNode)((0, import_vue6.toDisplayString)(!$data.hasCustomedStyle ? "\u81EA\u5B9A\u4E49Tab\u6837\u5F0F" : "\u79FB\u9664\u81EA\u5B9A\u4E49\u6837\u5F0F"), 1)
         ]),
         _: 1
       }, 8, ["onClick"]),
-      (0, import_vue7.createVNode)(_component_button, {
+      (0, import_vue6.createVNode)(_component_button, {
         class: "button",
         onClick: $options.customItem
       }, {
-        default: (0, import_vue7.withCtx)(() => [
-          (0, import_vue7.createTextVNode)((0, import_vue7.toDisplayString)(!$data.hasCustomedItem ? "\u81EA\u5B9A\u4E49Tab\u4FE1\u606F" : "\u79FB\u9664\u81EA\u5B9A\u4E49\u4FE1\u606F"), 1)
+        default: (0, import_vue6.withCtx)(() => [
+          (0, import_vue6.createTextVNode)((0, import_vue6.toDisplayString)(!$data.hasCustomedItem ? "\u81EA\u5B9A\u4E49Tab\u4FE1\u606F" : "\u79FB\u9664\u81EA\u5B9A\u4E49\u4FE1\u606F"), 1)
         ]),
         _: 1
       }, 8, ["onClick"]),
-      (0, import_vue7.createVNode)(_component_button, {
+      (0, import_vue6.createVNode)(_component_button, {
         class: "button",
         onClick: $options.hideTabBar
       }, {
-        default: (0, import_vue7.withCtx)(() => [
-          (0, import_vue7.createTextVNode)((0, import_vue7.toDisplayString)(!$data.hasHiddenTabBar ? "\u9690\u85CFTabBar" : "\u663E\u793ATabBar"), 1)
+        default: (0, import_vue6.withCtx)(() => [
+          (0, import_vue6.createTextVNode)((0, import_vue6.toDisplayString)(!$data.hasHiddenTabBar ? "\u9690\u85CFTabBar" : "\u663E\u793ATabBar"), 1)
         ]),
         _: 1
       }, 8, ["onClick"]),
-      (0, import_vue7.createElementVNode)("view", { class: "btn-area" }, [
-        (0, import_vue7.createVNode)(_component_button, {
+      (0, import_vue6.createElementVNode)("view", { class: "btn-area" }, [
+        (0, import_vue6.createVNode)(_component_button, {
           class: "button",
           type: "primary",
           onClick: $options.navigateBack
         }, {
-          default: (0, import_vue7.withCtx)(() => [
-            (0, import_vue7.createTextVNode)("\u8FD4\u56DE\u4E0A\u4E00\u7EA7")
+          default: (0, import_vue6.withCtx)(() => [
+            (0, import_vue6.createTextVNode)("\u8FD4\u56DE\u4E0A\u4E00\u7EA7")
           ]),
           _: 1
         }, 8, ["onClick"])
@@ -3331,7 +3297,7 @@ if (typeof uni !== 'undefined' && uni && uni.requireGlobal) {
   }
   var setTabBar = /* @__PURE__ */ _export_sfc(_sfc_main$12, [["render", _sfc_render$12], ["styles", [_style_0$12]], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/components/api-set-tabbar.nvue"]]);
   var _style_05 = { "uni-icon": { "": { "fontFamily": "uniicons", "fontWeight": "normal" } }, "uni-container": { "": { "paddingTop": 15, "paddingRight": 15, "paddingBottom": 15, "paddingLeft": 15, "backgroundColor": "#f8f8f8" } }, "uni-header-logo": { "": { "paddingTop": 15, "paddingRight": 15, "paddingBottom": 15, "paddingLeft": 15, "flexDirection": "column", "justifyContent": "center", "alignItems": "center", "marginTop": "10rpx" } }, "uni-header-image": { "": { "width": 80, "height": 80 } }, "uni-hello-text": { "": { "marginBottom": 20 } }, "hello-text": { "": { "color": "#7A7E83", "fontSize": 14, "lineHeight": 20 } }, "hello-link": { "": { "color": "#7A7E83", "fontSize": 14, "lineHeight": 20 } }, "uni-panel": { "": { "marginBottom": 12 } }, "uni-panel-h": { "": { "backgroundColor": "#ffffff", "!flexDirection": "row", "!alignItems": "center", "paddingTop": 12, "paddingRight": 12, "paddingBottom": 12, "paddingLeft": 12 } }, "uni-panel-h-on": { "": { "backgroundColor": "#f0f0f0" } }, "uni-panel-text": { "": { "flex": 1, "color": "#000000", "fontSize": 14, "fontWeight": "normal" } }, "uni-panel-icon": { "": { "marginLeft": 15, "color": "#999999", "fontSize": 14, "fontWeight": "normal", "transform": "rotate(0deg)", "transitionDuration": 0, "transitionProperty": "transform" } }, "uni-panel-icon-on": { "": { "transform": "rotate(180deg)" } }, "uni-navigate-item": { "": { "flexDirection": "row", "alignItems": "center", "backgroundColor": "#FFFFFF", "borderTopStyle": "solid", "borderTopColor": "#f0f0f0", "borderTopWidth": 1, "paddingTop": 12, "paddingRight": 12, "paddingBottom": 12, "paddingLeft": 12, "backgroundColor:active": "#f8f8f8" } }, "uni-navigate-text": { "": { "flex": 1, "color": "#000000", "fontSize": 14, "fontWeight": "normal" } }, "uni-navigate-icon": { "": { "marginLeft": 15, "color": "#999999", "fontSize": 14, "fontWeight": "normal" } }, "@TRANSITION": { "uni-panel-icon": { "duration": 0, "property": "transform" } } };
-  var _sfc_main6 = {
+  var _sfc_main5 = {
     components: {
       setTabBar
     },
@@ -3415,7 +3381,7 @@ if (typeof uni !== 'undefined' && uni && uni.requireGlobal) {
             "custom-header": "hello"
           },
           success: (res) => {
-            formatAppLog("log", "at pages/tabBar/API/API.nvue:159", res.data);
+            formatAppLog("log", "at pages/tabBar/API/API.nvue:138", res.data);
             this.initDirNames();
             uni.hideLoading();
           }
@@ -3463,36 +3429,35 @@ if (typeof uni !== 'undefined' && uni && uni.requireGlobal) {
       }
     }
   };
-  function _sfc_render6(_ctx, _cache, $props, $setup, $data, $options) {
-    const _component_set_tab_bar = (0, import_vue7.resolveComponent)("set-tab-bar");
-    const _component_uni_list_item = resolveEasycom((0, import_vue7.resolveDynamicComponent)("uni-list-item"), __easycom_3);
-    const _component_uni_list = resolveEasycom((0, import_vue7.resolveDynamicComponent)("uni-list"), __easycom_4);
-    const _component_uni_section = resolveEasycom((0, import_vue7.resolveDynamicComponent)("uni-section"), __easycom_2);
-    const _component_button = (0, import_vue7.resolveComponent)("button");
-    const _component_uni_popup_dialog = resolveEasycom((0, import_vue7.resolveDynamicComponent)("uni-popup-dialog"), __easycom_32);
-    const _component_uni_popup = resolveEasycom((0, import_vue7.resolveDynamicComponent)("uni-popup"), __easycom_42);
-    const _component_u_link = resolveEasycom((0, import_vue7.resolveDynamicComponent)("u-link"), __easycom_0);
-    return (0, import_vue7.openBlock)(), (0, import_vue7.createElementBlock)("scroll-view", {
+  function _sfc_render5(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_set_tab_bar = (0, import_vue6.resolveComponent)("set-tab-bar");
+    const _component_uni_list_item = resolveEasycom((0, import_vue6.resolveDynamicComponent)("uni-list-item"), __easycom_3);
+    const _component_uni_list = resolveEasycom((0, import_vue6.resolveDynamicComponent)("uni-list"), __easycom_4);
+    const _component_uni_section = resolveEasycom((0, import_vue6.resolveDynamicComponent)("uni-section"), __easycom_2);
+    const _component_button = (0, import_vue6.resolveComponent)("button");
+    const _component_uni_popup_dialog = resolveEasycom((0, import_vue6.resolveDynamicComponent)("uni-popup-dialog"), __easycom_32);
+    const _component_uni_popup = resolveEasycom((0, import_vue6.resolveDynamicComponent)("uni-popup"), __easycom_42);
+    return (0, import_vue6.openBlock)(), (0, import_vue6.createElementBlock)("scroll-view", {
       scrollY: true,
       showScrollbar: true,
       enableBackToTop: true,
       bubble: "true",
       style: { flexDirection: "column" }
     }, [
-      (0, import_vue7.createElementVNode)("view", { class: "uni-container" }, [
-        $data.showSetTabBarPage ? ((0, import_vue7.openBlock)(), (0, import_vue7.createBlock)(_component_set_tab_bar, {
+      (0, import_vue6.createElementVNode)("view", { class: "uni-container" }, [
+        $data.showSetTabBarPage ? ((0, import_vue6.openBlock)(), (0, import_vue6.createBlock)(_component_set_tab_bar, {
           key: 0,
           onUnmount: $options.leaveSetTabBarPage
-        }, null, 8, ["onUnmount"])) : ((0, import_vue7.openBlock)(), (0, import_vue7.createElementBlock)(import_vue7.Fragment, { key: 1 }, [
-          (0, import_vue7.createVNode)(_component_uni_section, {
+        }, null, 8, ["onUnmount"])) : ((0, import_vue6.openBlock)(), (0, import_vue6.createElementBlock)(import_vue6.Fragment, { key: 1 }, [
+          (0, import_vue6.createVNode)(_component_uni_section, {
             title: "\u542C\u5199\u76EE\u5F55",
             type: "line"
           }, {
-            default: (0, import_vue7.withCtx)(() => [
-              (0, import_vue7.createVNode)(_component_uni_list, null, {
-                default: (0, import_vue7.withCtx)(() => [
-                  ((0, import_vue7.openBlock)(true), (0, import_vue7.createElementBlock)(import_vue7.Fragment, null, (0, import_vue7.renderList)($data.dirs, (dir, index) => {
-                    return (0, import_vue7.openBlock)(), (0, import_vue7.createBlock)(_component_uni_list_item, {
+            default: (0, import_vue6.withCtx)(() => [
+              (0, import_vue6.createVNode)(_component_uni_list, null, {
+                default: (0, import_vue6.withCtx)(() => [
+                  ((0, import_vue6.openBlock)(true), (0, import_vue6.createElementBlock)(import_vue6.Fragment, null, (0, import_vue6.renderList)($data.dirs, (dir, index) => {
+                    return (0, import_vue6.openBlock)(), (0, import_vue6.createBlock)(_component_uni_list_item, {
                       title: dir,
                       clickable: "",
                       onClick: ($event) => $options.goDetailPage("media", "voice", dir)
@@ -3504,23 +3469,23 @@ if (typeof uni !== 'undefined' && uni && uni.requireGlobal) {
             ]),
             _: 1
           }),
-          (0, import_vue7.createElementVNode)("view", null, [
-            (0, import_vue7.createVNode)(_component_button, {
+          (0, import_vue6.createElementVNode)("view", null, [
+            (0, import_vue6.createVNode)(_component_button, {
               type: "primary",
               onClick: $options.inputDialogToggle
             }, {
-              default: (0, import_vue7.withCtx)(() => [
-                (0, import_vue7.createTextVNode)(" \u521B\u5EFA\u542C\u5199\u76EE\u5F55 ")
+              default: (0, import_vue6.withCtx)(() => [
+                (0, import_vue6.createTextVNode)(" \u521B\u5EFA\u542C\u5199\u76EE\u5F55 ")
               ]),
               _: 1
             }, 8, ["onClick"]),
-            (0, import_vue7.createCommentVNode)(" \u8F93\u5165\u6846\u793A\u4F8B "),
-            (0, import_vue7.createVNode)(_component_uni_popup, {
+            (0, import_vue6.createCommentVNode)(" \u8F93\u5165\u6846\u793A\u4F8B "),
+            (0, import_vue6.createVNode)(_component_uni_popup, {
               ref: "inputDialog",
               type: "dialog"
             }, {
-              default: (0, import_vue7.withCtx)(() => [
-                (0, import_vue7.createVNode)(_component_uni_popup_dialog, {
+              default: (0, import_vue6.withCtx)(() => [
+                (0, import_vue6.createVNode)(_component_uni_popup_dialog, {
                   ref: "inputClose",
                   mode: "input",
                   title: "\u521B\u5EFA\u65B0\u7684\u542C\u5199\u76EE\u5F55",
@@ -3530,65 +3495,12 @@ if (typeof uni !== 'undefined' && uni && uni.requireGlobal) {
               ]),
               _: 1
             }, 512)
-          ]),
-          !$props.hasLeftWin ? ((0, import_vue7.openBlock)(), (0, import_vue7.createElementBlock)("view", {
-            key: 0,
-            class: "uni-header-logo"
-          }, [
-            (0, import_vue7.createElementVNode)("u-image", {
-              class: "uni-header-image",
-              src: "/static/apiIndex.png"
-            })
-          ])) : (0, import_vue7.createCommentVNode)("v-if", true),
-          !$props.hasLeftWin ? ((0, import_vue7.openBlock)(), (0, import_vue7.createElementBlock)("view", {
-            key: 1,
-            class: "uni-hello-text"
-          }, [
-            (0, import_vue7.createElementVNode)("u-text", { class: "hello-text" }, "\u4EE5\u4E0B\u5C06\u6F14\u793Auni-app\u63A5\u53E3\u80FD\u529B\uFF0C\u8BE6\u7EC6\u6587\u6863\u89C1\uFF1A"),
-            (0, import_vue7.createVNode)(_component_u_link, {
-              class: "hello-link",
-              href: "https://uniapp.dcloud.io/api/",
-              text: "https://uniapp.dcloud.io/api/",
-              inWhiteList: true
-            }, null, 8, ["href", "text"])
-          ])) : (0, import_vue7.createCommentVNode)("v-if", true),
-          ((0, import_vue7.openBlock)(true), (0, import_vue7.createElementBlock)(import_vue7.Fragment, null, (0, import_vue7.renderList)($data.list, (item, index) => {
-            return (0, import_vue7.openBlock)(), (0, import_vue7.createElementBlock)("view", {
-              class: "uni-panel",
-              key: item.id
-            }, [
-              (0, import_vue7.createElementVNode)("view", {
-                class: (0, import_vue7.normalizeClass)(["uni-panel-h", item.open ? "uni-panel-h-on" : ""]),
-                onClick: ($event) => $options.triggerCollapse(index, item.id)
-              }, [
-                (0, import_vue7.createElementVNode)("u-text", { class: "uni-panel-text" }, (0, import_vue7.toDisplayString)(item.name), 1),
-                (0, import_vue7.createElementVNode)("u-text", {
-                  class: (0, import_vue7.normalizeClass)(["uni-panel-icon uni-icon", item.open ? "uni-panel-icon-on" : ""])
-                }, (0, import_vue7.toDisplayString)(item.pages ? "\uE581" : "\uE470"), 3)
-              ], 10, ["onClick"]),
-              item.open ? ((0, import_vue7.openBlock)(), (0, import_vue7.createElementBlock)("view", {
-                key: 0,
-                class: "uni-panel-c"
-              }, [
-                ((0, import_vue7.openBlock)(true), (0, import_vue7.createElementBlock)(import_vue7.Fragment, null, (0, import_vue7.renderList)(item.pages, (item2, key) => {
-                  return (0, import_vue7.openBlock)(), (0, import_vue7.createElementBlock)("view", {
-                    class: (0, import_vue7.normalizeClass)([{ "left-win-active": $props.leftWinActive === item2.url && $props.hasLeftWin, "pc-hide": item2.name === "\u8BBE\u7F6ETabBar" && $props.hasLeftWin }, "uni-navigate-item"]),
-                    key,
-                    url: item.url,
-                    onClick: ($event) => $options.goDetailPage(item.id, item2.url)
-                  }, [
-                    (0, import_vue7.createElementVNode)("u-text", { class: "uni-navigate-text" }, (0, import_vue7.toDisplayString)(item2.name ? item2.name : item2), 1),
-                    (0, import_vue7.createElementVNode)("u-text", { class: "uni-navigate-icon uni-icon" }, "\uE470")
-                  ], 10, ["url", "onClick"]);
-                }), 128))
-              ])) : (0, import_vue7.createCommentVNode)("v-if", true)
-            ]);
-          }), 128))
+          ])
         ], 64))
       ])
     ]);
   }
-  var API = /* @__PURE__ */ _export_sfc(_sfc_main6, [["render", _sfc_render6], ["styles", [_style_05]], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/tabBar/API/API.nvue"]]);
+  var API = /* @__PURE__ */ _export_sfc(_sfc_main5, [["render", _sfc_render5], ["styles", [_style_05]], ["__file", "/Users/clement.lin.local/Documents/HBuilderProjects/test1/pages/tabBar/API/API.nvue"]]);
 
   // <stdin>
   var webview = plus.webview.currentWebview();

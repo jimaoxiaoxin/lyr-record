@@ -3,14 +3,25 @@
         <page-head :title="title"></page-head>
 		<view>
 				<view class="page-body">
-					<view class="page-section page-section-gap" style="text-align: center;">
-						<audio v-for="(record, index) in records" 
+					<view v-for="(record, index) in records"  class="page-section page-section-gap" style="text-align: center;">
+						<audio 
 							:key="index"
 							:id="record + index"
 							:src="getRecordUrl(record)"
 							style="text-align: left"  
 							:action="audioAction" 
 							controls></audio>
+						<button class="mini-btn" type="primary" size="mini" @click="deleteRecord(record)">删除</button>	
+					</view>
+					<view>
+						<button type="primary" @click="inputDialogToggle">
+							设置播放间隔时间
+						</button>
+						<!-- 输入框示例 -->
+						<uni-popup ref="inputDialog" type="dialog">
+							<uni-popup-dialog ref="inputClose"  mode="input" title="设置播放间隔时间"
+								placeholder="输入一个秒数" @confirm="dialogInputConfirm"></uni-popup-dialog>
+						</uni-popup>
 					</view>
 					<view class="uni-padding-wrap uni-common-mt">
 					    <button type="primary" 
@@ -26,7 +37,7 @@
 					</view>
 					<view class="uni-padding-wrap uni-common-mt">
 					    <button type="primary" 
-							@click="refreshRecordsList">重新播放</button>
+							@click="restartPlayRecords">重新播放</button>
 					</view>
 				</view>
 			</view>
@@ -109,6 +120,7 @@
 				pausePlay: false,
                 recordTime: 0,
                 playTime: 0,
+				pauseSeconds: 15,
                 formatedRecordTime: '00:00:00', //录音的总时间
                 formatedPlayTime: '00:00:00' ,//播放录音的当前时间，
 				records: [],
@@ -175,7 +187,7 @@
 			bgAudioManager = uni.getBackgroundAudioManager();
 			bgAudioManager.onEnded((res) => {
 				if (!this.pausePlay) {	
-					this.sleep(15000);
+					this.sleep(this.pauseSeconds);
 					this.randomPlayRecords();
 				}
 			});
@@ -195,8 +207,31 @@
                     format: 'mp3'
                 });
             },
+			inputDialogToggle() {
+				this.$refs.inputDialog.open()
+			},
+			dialogInputConfirm(val) {
+				this.pauseSeconds = parseInt(val) * 1000;
+			},
 			getRecordUrl(file) {
 				return 'http://47.94.170.153/storage/' + file; 
+			},
+			deleteRecord(record) {
+				console.log('delete record' + record);
+				uni.request({
+					url: 'http://47.94.170.153/' + this.dirName + '/record',
+					method: 'DELETE',
+					data: {
+						file_name: record
+					},
+					header: {
+						'custom-header': 'hello'
+					},
+					success: (res) => {
+						console.log(res.data);
+						this.refreshRecordsList();
+					}
+				})
 			},
 			refreshRecordsList() {
 				uni.request({
@@ -218,6 +253,10 @@
 			},
 			continuePlayRecords() {
 				this.pausePlay = false;
+				this.randomPlayRecords();
+			},
+			restartPlayRecords() {
+				this.refreshRecordsList();
 				this.randomPlayRecords();
 			},
 			sleep(delay) {

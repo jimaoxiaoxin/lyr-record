@@ -23,7 +23,6 @@ import { openBlock, createElementBlock, createElementVNode, normalizeClass, toDi
 import { _ as __easycom_2 } from "../../../uni-section.js";
 import { i as initVueI18n } from "../../../uni-i18n.es.js";
 import { _ as _export_sfc } from "../../../plugin-vue_export-helper.js";
-import { _ as __easycom_0$2 } from "../../../u-link.js";
 import "../../../uni-icons.js";
 import "../../../uni-badge.js";
 var popup = {
@@ -1222,7 +1221,7 @@ const _sfc_main = {
           "custom-header": "hello"
         },
         success: (res) => {
-          formatAppLog("log", "at pages/tabBar/API/API.nvue:159", res.data);
+          formatAppLog("log", "at pages/tabBar/API/API.nvue:138", res.data);
           this.initDirNames();
           uni.hideLoading();
         }
@@ -1278,7 +1277,6 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   const _component_button = resolveComponent("button");
   const _component_uni_popup_dialog = resolveEasycom(resolveDynamicComponent("uni-popup-dialog"), __easycom_3);
   const _component_uni_popup = resolveEasycom(resolveDynamicComponent("uni-popup"), __easycom_4);
-  const _component_u_link = resolveEasycom(resolveDynamicComponent("u-link"), __easycom_0$2);
   return openBlock(), createElementBlock("scroll-view", {
     scrollY: true,
     showScrollbar: true,
@@ -1337,60 +1335,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
             ]),
             _: 1
           }, 512)
-        ]),
-        !$props.hasLeftWin ? (openBlock(), createElementBlock("view", {
-          key: 0,
-          class: "uni-header-logo"
-        }, [
-          createElementVNode("u-image", {
-            class: "uni-header-image",
-            src: "/static/apiIndex.png"
-          })
-        ])) : createCommentVNode("v-if", true),
-        !$props.hasLeftWin ? (openBlock(), createElementBlock("view", {
-          key: 1,
-          class: "uni-hello-text"
-        }, [
-          createElementVNode("u-text", { class: "hello-text" }, "\u4EE5\u4E0B\u5C06\u6F14\u793Auni-app\u63A5\u53E3\u80FD\u529B\uFF0C\u8BE6\u7EC6\u6587\u6863\u89C1\uFF1A"),
-          createVNode(_component_u_link, {
-            class: "hello-link",
-            href: "https://uniapp.dcloud.io/api/",
-            text: "https://uniapp.dcloud.io/api/",
-            inWhiteList: true
-          }, null, 8, ["href", "text"])
-        ])) : createCommentVNode("v-if", true),
-        (openBlock(true), createElementBlock(Fragment, null, renderList($data.list, (item, index) => {
-          return openBlock(), createElementBlock("view", {
-            class: "uni-panel",
-            key: item.id
-          }, [
-            createElementVNode("view", {
-              class: normalizeClass(["uni-panel-h", item.open ? "uni-panel-h-on" : ""]),
-              onClick: ($event) => $options.triggerCollapse(index, item.id)
-            }, [
-              createElementVNode("u-text", { class: "uni-panel-text" }, toDisplayString(item.name), 1),
-              createElementVNode("u-text", {
-                class: normalizeClass(["uni-panel-icon uni-icon", item.open ? "uni-panel-icon-on" : ""])
-              }, toDisplayString(item.pages ? "\uE581" : "\uE470"), 3)
-            ], 10, ["onClick"]),
-            item.open ? (openBlock(), createElementBlock("view", {
-              key: 0,
-              class: "uni-panel-c"
-            }, [
-              (openBlock(true), createElementBlock(Fragment, null, renderList(item.pages, (item2, key) => {
-                return openBlock(), createElementBlock("view", {
-                  class: normalizeClass([{ "left-win-active": $props.leftWinActive === item2.url && $props.hasLeftWin, "pc-hide": item2.name === "\u8BBE\u7F6ETabBar" && $props.hasLeftWin }, "uni-navigate-item"]),
-                  key,
-                  url: item.url,
-                  onClick: ($event) => $options.goDetailPage(item.id, item2.url)
-                }, [
-                  createElementVNode("u-text", { class: "uni-navigate-text" }, toDisplayString(item2.name ? item2.name : item2), 1),
-                  createElementVNode("u-text", { class: "uni-navigate-icon uni-icon" }, "\uE470")
-                ], 10, ["url", "onClick"]);
-              }), 128))
-            ])) : createCommentVNode("v-if", true)
-          ]);
-        }), 128))
+        ])
       ], 64))
     ])
   ]);
